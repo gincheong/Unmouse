@@ -19,7 +19,7 @@ Label input is matched by key code, not by character. It works without switching
 | Liquid Glass labels | macOS 26 or later                                          |
 | Building            | Xcode or Command Line Tools with the macOS 26 SDK or later |
 
-Mission Control labels were verified on macOS 27. They have not been verified on macOS 26 or earlier.
+Mission Control labels were verified on macOS 27 only.
 
 ## Build and run
 
@@ -28,7 +28,7 @@ Mission Control labels were verified on macOS 27. They have not been verified on
 open build/Unmouse.app
 ```
 
-On first launch the app asks for Accessibility permission. Turn on Unmouse in System Settings > Privacy & Security > Accessibility, and it starts working right away.
+On first launch the app asks for Accessibility permission. Turn on Unmouse in System Settings > Privacy & Security > Accessibility.
 
 ### Signing
 
@@ -72,11 +72,10 @@ When there are several scroll areas, scrolling starts in the one under the curso
 
 ### Settings
 
-Open `설정…` (Settings) from the Unmouse icon in the menu bar. Shortcuts, scroll speed, automatic labels in Mission Control, and label design can be changed there, and changes apply immediately. The settings window is in Korean.
+Open `설정…` (Settings) from the Unmouse icon in the menu bar to change shortcuts, scroll speed, automatic labels in Mission Control, and label design. The settings window is in Korean.
 
 ## Limitations
 
-- There is no search mode.
 - The Dock and other apps' menu bar icons do not get labels.
 - In Chromium browsers and Electron apps, only some labels may appear while the accessibility tree is being built for the first time.
 - Shortcuts may not work while secure input is on, such as in a password field.
@@ -95,14 +94,6 @@ $BIN --preview [bundle id]         # show labels on screen for 3 seconds
 ```
 
 These run from the terminal, so the terminal app needs Accessibility permission.
-
-## Regenerating the icon
-
-```sh
-swift icon/make-icon.swift icon/AppIcon.iconset
-iconutil -c icns icon/AppIcon.iconset -o icon/AppIcon.icns
-./build.sh
-```
 
 ## License
 
