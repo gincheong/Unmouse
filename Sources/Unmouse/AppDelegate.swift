@@ -29,6 +29,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        openSettings()
+        return false
+    }
+
     private func start() {
         if !controller.installTap() {
             NSLog("Unmouse: event tap 생성 실패")
