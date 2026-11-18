@@ -1,0 +1,18 @@
+# SwiftPM
+.build/
+.swiftpm/
+Package.resolved
+
+# build.sh 결과물
+build/
+
+# make-icon.swift가 만드는 중간 결과물. AppIcon.icns는 빌드에 필요해서 커밋한다.
+icon/AppIcon.iconset/
+
+# Xcode
+*.xcodeproj/
+xcuserdata/
+DerivedData/
+
+# macOS
+.DS_Store
