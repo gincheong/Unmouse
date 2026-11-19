@@ -161,15 +161,19 @@ final class AXScanner {
 
         var clip = clip
         var visible = CGRect.null
+        var full = CGRect.null
         if let origin = point(values[1]), let size = size(values[2]), size.width > 0, size.height > 0 {
-            visible = CGRect(origin: origin, size: size).intersection(clip)
+            full = CGRect(origin: origin, size: size)
+            visible = full.intersection(clip)
             if visible.isNull || visible.width < 3 || visible.height < 3 { return }
             if role == "AXScrollArea" || role == "AXWindow" { clip = visible }
         }
 
         if mode == .scroll {
             let scrollable = role == "AXScrollArea" || (role == "AXWebArea" && !insideTarget)
-            if scrollable, !visible.isNull, visible.width >= 50, visible.height >= 50 {
+            if scrollable, !visible.isNull, visible.width >= 50, visible.height >= 50,
+                role != "AXScrollArea" || !isFittingTextInput(element, frame: full, children: children)
+            {
                 targets.append(Target(frame: visible))
             }
             if role == "AXWebArea" || Self.leafRoles.contains(role) { return }
@@ -198,6 +202,20 @@ final class AXScanner {
         let childInWeb = inWeb || role == "AXWebArea"
         for child in children {
             visit(child, clip: clip, insideTarget: insideTarget || clickable, inWeb: childInWeb, depth: depth + 1)
+        }
+    }
+
+    // 내용이 다 보이는 텍스트 입력란은 스크롤할 것이 없어서 대상에서 뺀다. 메신저의 한두 줄짜리 입력란이 여기에 해당한다.
+    // 웹 영역을 감싼 스크롤 영역도 내용 크기가 영역과 같게 나오기 때문에 텍스트 입력란으로만 좁힌다.
+    private func isFittingTextInput(_ area: AXUIElement, frame: CGRect, children: [AXUIElement]) -> Bool {
+        guard !children.isEmpty, value(area, "AXVerticalScrollBar") == nil,
+            value(area, "AXHorizontalScrollBar") == nil
+        else { return false }
+        return children.allSatisfy { child in
+            guard let role = string(child, "AXRole"), role == "AXTextArea" || role == "AXTextField",
+                let content = self.frame(of: child)
+            else { return false }
+            return content.width <= frame.width + 1 && content.height <= frame.height + 1
         }
     }
 
