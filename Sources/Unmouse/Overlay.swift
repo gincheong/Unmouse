@@ -125,7 +125,7 @@ final class LabelsView: NSView {
         }
         guard glassHost == nil, let context = NSGraphicsContext.current?.cgContext else { return }
 
-        let font = NSFont.monospacedSystemFont(ofSize: style.fontSize, weight: .bold)
+        let font = style.font
         for layout in layouts(style: style) {
             let outline = layout.outline().cgPath
             context.addPath(outline)
@@ -147,7 +147,7 @@ final class LabelsView: NSView {
     }
 
     private func layouts(style: LabelStyle) -> [LabelLayout] {
-        let font = NSFont.monospacedSystemFont(ofSize: style.fontSize, weight: .bold)
+        let font = style.font
         let pointed = showsPointers && style.pointer
         let arrowHeight = max(4, round(style.fontSize * 0.4))
         // 유리는 여백이 좁으면 재질이 보이지 않아서 상자를 더 크게 잡는다.
@@ -259,7 +259,7 @@ private struct GlassLabels: View {
         let typed = String(layout.text.prefix(layout.typedCount))
         let rest = String(layout.text.dropFirst(layout.typedCount))
         return (Text(typed).foregroundColor(textColor.opacity(0.35)) + Text(rest).foregroundColor(textColor))
-            .font(.system(size: style.fontSize, weight: .bold, design: .monospaced))
+            .font(Font(style.font as CTFont))
     }
 }
 

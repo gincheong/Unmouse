@@ -21,6 +21,8 @@ struct Hotkey: Equatable {
 }
 
 struct LabelStyle {
+    var fontFamily: String
+    var fontWeight: String
     var fontSize: CGFloat
     var background: NSColor
     var text: NSColor
@@ -29,6 +31,8 @@ struct LabelStyle {
     var glass: Bool
     var glassTint: Bool
     var pointer: Bool
+
+    var font: NSFont { Settings.labelFont(family: fontFamily, weight: fontWeight, size: fontSize) }
 }
 
 enum Settings {
@@ -47,6 +51,8 @@ enum Settings {
         static let missionControlEnabled = "missionControlEnabled"
         static let missionControlAutoActivate = "missionControlAutoActivate"
         static let labelCharacters = "labelCharacters"
+        static let labelFontFamily = "labelFontFamily"
+        static let labelFontWeight = "labelFontWeight"
         static let labelFontSize = "labelFontSize"
         static let labelBackgroundColor = "labelBackgroundColor"
         static let labelTextColor = "labelTextColor"
@@ -56,6 +62,15 @@ enum Settings {
         static let labelGlassTint = "labelGlassTint"
         static let labelPointer = "labelPointer"
     }
+
+    // 설치된 서체 이름과 겹치지 않는 값으로 시스템 서체를 구분한다.
+    static let monospacedFontFamily = ".monospaced"
+    static let systemFontFamily = ".system"
+    static let fontWeights: [(key: String, title: String, weight: NSFont.Weight)] = [
+        ("light", "가늘게", .light), ("regular", "보통", .regular), ("medium", "중간", .medium),
+        ("semibold", "약간 굵게", .semibold), ("bold", "굵게", .bold), ("heavy", "아주 굵게", .heavy),
+        ("black", "가장 굵게", .black),
+    ]
 
     static let defaults: [String: Any] = [
         Keys.clickHotkeyKeyCode: 39,
@@ -72,6 +87,8 @@ enum Settings {
         Keys.missionControlEnabled: true,
         Keys.missionControlAutoActivate: true,
         Keys.labelCharacters: "sadfjklewcmpgh",
+        Keys.labelFontFamily: monospacedFontFamily,
+        Keys.labelFontWeight: "bold",
         Keys.labelFontSize: 12.0,
         Keys.labelBackgroundColor: "#FFD60A",
         Keys.labelTextColor: "#000000",
@@ -82,7 +99,7 @@ enum Settings {
         Keys.labelPointer: true,
     ]
     static let labelStyleKeys = [
-        Keys.labelCharacters, Keys.labelFontSize, Keys.labelBackgroundColor, Keys.labelTextColor,
+        Keys.labelCharacters, Keys.labelFontFamily, Keys.labelFontWeight, Keys.labelFontSize, Keys.labelBackgroundColor, Keys.labelTextColor,
         Keys.labelCornerRadius, Keys.labelUppercase, Keys.labelGlass, Keys.labelGlassTint, Keys.labelPointer,
     ]
 
@@ -113,6 +130,8 @@ enum Settings {
 
     static var labelStyle: LabelStyle {
         LabelStyle(
+            fontFamily: store.string(forKey: Keys.labelFontFamily) ?? monospacedFontFamily,
+            fontWeight: store.string(forKey: Keys.labelFontWeight) ?? "bold",
             fontSize: max(store.double(forKey: Keys.labelFontSize), 6),
             background: NSColor(hex: store.string(forKey: Keys.labelBackgroundColor) ?? "") ?? .systemYellow,
             text: NSColor(hex: store.string(forKey: Keys.labelTextColor) ?? "") ?? .black,
@@ -121,6 +140,20 @@ enum Settings {
             glass: store.bool(forKey: Keys.labelGlass),
             glassTint: store.bool(forKey: Keys.labelGlassTint),
             pointer: store.bool(forKey: Keys.labelPointer))
+    }
+
+    static func labelFont(family: String, weight: String, size: CGFloat) -> NSFont {
+        let weight = fontWeights.first { $0.key == weight }?.weight ?? .bold
+        let monospaced = NSFont.monospacedSystemFont(ofSize: size, weight: weight)
+        switch family {
+        case monospacedFontFamily: return monospaced
+        case systemFontFamily: return .systemFont(ofSize: size, weight: weight)
+        default:
+            let descriptor = NSFontDescriptor(fontAttributes: [
+                .family: family, .traits: [NSFontDescriptor.TraitKey.weight: weight.rawValue],
+            ])
+            return NSFont(descriptor: descriptor, size: size) ?? monospaced
+        }
     }
 
     private static func hotkey(_ keyCodeKey: String, _ modifiersKey: String) -> Hotkey {

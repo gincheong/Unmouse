@@ -10,7 +10,7 @@ Label input is matched by key code, not by character. It works without switching
 - **Scroll mode**: selects a scroll area and scrolls it with the keyboard.
 - **Grid mode**: divides the screen into a grid and clicks any position, even in apps that expose no clickable elements.
 - **Mission Control**: shows labels on window thumbnails and spaces when Mission Control opens.
-- **Label design**: label characters, font size, colors, corner radius, pointer arrow, and Liquid Glass can be changed in the settings window.
+- **Label design**: label characters, font, font weight, font size, colors, corner radius, pointer arrow, and Liquid Glass can be changed in the settings window.
 
 ## Requirements
 

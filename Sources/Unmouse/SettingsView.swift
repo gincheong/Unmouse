@@ -89,6 +89,8 @@ private struct MissionControlTab: View {
 
 private struct LabelTab: View {
     @AppStorage(Settings.Keys.labelCharacters) private var characters = ""
+    @AppStorage(Settings.Keys.labelFontFamily) private var fontFamily = Settings.monospacedFontFamily
+    @AppStorage(Settings.Keys.labelFontWeight) private var fontWeight = "bold"
     @AppStorage(Settings.Keys.labelFontSize) private var fontSize = 12.0
     @AppStorage(Settings.Keys.labelBackgroundColor) private var background = "#FFD60A"
     @AppStorage(Settings.Keys.labelTextColor) private var text = "#000000"
@@ -111,7 +113,7 @@ private struct LabelTab: View {
                                         .frame(width: max(4, fontSize * 0.4) * 1.6, height: max(4, fontSize * 0.4))
                                 }
                                 Text(uppercase ? sample.uppercased() : sample)
-                                    .font(.system(size: fontSize, weight: .bold, design: .monospaced))
+                                    .font(Font(Settings.labelFont(family: fontFamily, weight: fontWeight, size: fontSize) as CTFont))
                                     .foregroundColor(color(text))
                                     .padding(.horizontal, 3)
                                     .padding(.vertical, 1)
@@ -127,6 +129,15 @@ private struct LabelTab: View {
             }
             Section {
                 TextField("라벨 문자", text: $characters)
+                Picker("서체", selection: $fontFamily) {
+                    Text("시스템 고정폭").tag(Settings.monospacedFontFamily)
+                    Text("시스템").tag(Settings.systemFontFamily)
+                    Divider()
+                    ForEach(NSFontManager.shared.availableFontFamilies, id: \.self) { Text($0).tag($0) }
+                }
+                Picker("굵기", selection: $fontWeight) {
+                    ForEach(Settings.fontWeights, id: \.key) { Text($0.title).tag($0.key) }
+                }
                 LabeledContent("글자 크기") {
                     HStack {
                         Slider(value: $fontSize, in: 8...24, step: 1)
