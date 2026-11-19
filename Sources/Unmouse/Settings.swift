@@ -24,6 +24,8 @@ struct LabelStyle {
     var fontFamily: String
     var fontWeight: String
     var fontSize: CGFloat
+    // 글자 크기에 더하는 상자의 가로, 세로 길이
+    var padding: CGSize
     var background: NSColor
     var text: NSColor
     var cornerRadius: CGFloat
@@ -54,6 +56,8 @@ enum Settings {
         static let labelFontFamily = "labelFontFamily"
         static let labelFontWeight = "labelFontWeight"
         static let labelFontSize = "labelFontSize"
+        static let labelPaddingWidth = "labelPaddingWidth"
+        static let labelPaddingHeight = "labelPaddingHeight"
         static let labelBackgroundColor = "labelBackgroundColor"
         static let labelTextColor = "labelTextColor"
         static let labelCornerRadius = "labelCornerRadius"
@@ -90,6 +94,8 @@ enum Settings {
         Keys.labelFontFamily: monospacedFontFamily,
         Keys.labelFontWeight: "bold",
         Keys.labelFontSize: 12.0,
+        Keys.labelPaddingWidth: 6.0,
+        Keys.labelPaddingHeight: 2.0,
         Keys.labelBackgroundColor: "#FFD60A",
         Keys.labelTextColor: "#000000",
         Keys.labelCornerRadius: 3.0,
@@ -99,7 +105,8 @@ enum Settings {
         Keys.labelPointer: true,
     ]
     static let labelStyleKeys = [
-        Keys.labelCharacters, Keys.labelFontFamily, Keys.labelFontWeight, Keys.labelFontSize, Keys.labelBackgroundColor, Keys.labelTextColor,
+        Keys.labelCharacters, Keys.labelFontFamily, Keys.labelFontWeight, Keys.labelFontSize, Keys.labelPaddingWidth,
+        Keys.labelPaddingHeight, Keys.labelBackgroundColor, Keys.labelTextColor,
         Keys.labelCornerRadius, Keys.labelUppercase, Keys.labelGlass, Keys.labelGlassTint, Keys.labelPointer,
     ]
 
@@ -133,6 +140,9 @@ enum Settings {
             fontFamily: store.string(forKey: Keys.labelFontFamily) ?? monospacedFontFamily,
             fontWeight: store.string(forKey: Keys.labelFontWeight) ?? "bold",
             fontSize: max(store.double(forKey: Keys.labelFontSize), 6),
+            padding: CGSize(
+                width: max(store.double(forKey: Keys.labelPaddingWidth), 0),
+                height: max(store.double(forKey: Keys.labelPaddingHeight), 0)),
             background: NSColor(hex: store.string(forKey: Keys.labelBackgroundColor) ?? "") ?? .systemYellow,
             text: NSColor(hex: store.string(forKey: Keys.labelTextColor) ?? "") ?? .black,
             cornerRadius: max(store.double(forKey: Keys.labelCornerRadius), 0),

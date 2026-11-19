@@ -150,8 +150,7 @@ final class LabelsView: NSView {
         let font = style.font
         let pointed = showsPointers && style.pointer
         let arrowHeight = max(4, round(style.fontSize * 0.4))
-        // 유리는 여백이 좁으면 재질이 보이지 않아서 상자를 더 크게 잡는다.
-        let padding = style.glass ? CGSize(width: 12, height: 6) : CGSize(width: 6, height: 2)
+        let padding = style.padding
 
         return items.filter { $0.label.hasPrefix(typed) }.enumerated().map { index, item in
             let text = style.uppercase ? item.label.uppercased() : item.label

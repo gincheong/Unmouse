@@ -92,6 +92,8 @@ private struct LabelTab: View {
     @AppStorage(Settings.Keys.labelFontFamily) private var fontFamily = Settings.monospacedFontFamily
     @AppStorage(Settings.Keys.labelFontWeight) private var fontWeight = "bold"
     @AppStorage(Settings.Keys.labelFontSize) private var fontSize = 12.0
+    @AppStorage(Settings.Keys.labelPaddingWidth) private var paddingWidth = 6.0
+    @AppStorage(Settings.Keys.labelPaddingHeight) private var paddingHeight = 2.0
     @AppStorage(Settings.Keys.labelBackgroundColor) private var background = "#FFD60A"
     @AppStorage(Settings.Keys.labelTextColor) private var text = "#000000"
     @AppStorage(Settings.Keys.labelCornerRadius) private var cornerRadius = 3.0
@@ -115,8 +117,8 @@ private struct LabelTab: View {
                                 Text(uppercase ? sample.uppercased() : sample)
                                     .font(Font(Settings.labelFont(family: fontFamily, weight: fontWeight, size: fontSize) as CTFont))
                                     .foregroundColor(color(text))
-                                    .padding(.horizontal, 3)
-                                    .padding(.vertical, 1)
+                                    .padding(.horizontal, paddingWidth / 2)
+                                    .padding(.vertical, paddingHeight / 2)
                                     .background(
                                         RoundedRectangle(cornerRadius: cornerRadius).fill(color(background)))
                                     .overlay(
@@ -144,6 +146,18 @@ private struct LabelTab: View {
                         Text("\(Int(fontSize))").monospacedDigit().frame(width: 28, alignment: .trailing)
                     }
                 }
+                LabeledContent("가로 여백") {
+                    HStack {
+                        Slider(value: $paddingWidth, in: 0...24, step: 1)
+                        Text("\(Int(paddingWidth))").monospacedDigit().frame(width: 28, alignment: .trailing)
+                    }
+                }
+                LabeledContent("세로 여백") {
+                    HStack {
+                        Slider(value: $paddingHeight, in: 0...16, step: 1)
+                        Text("\(Int(paddingHeight))").monospacedDigit().frame(width: 28, alignment: .trailing)
+                    }
+                }
                 ColorPicker("배경색", selection: colorBinding($background), supportsOpacity: false)
                 ColorPicker("글자색", selection: colorBinding($text), supportsOpacity: false)
                 LabeledContent("모서리 둥글기") {
@@ -159,7 +173,7 @@ private struct LabelTab: View {
                 Toggle("Liquid Glass", isOn: $glass)
                 Toggle("유리에 배경색 입히기", isOn: $glassTint).disabled(!glass)
             } footer: {
-                Text("macOS 26 이상에서 적용됩니다. 미리보기에는 반영되지 않으니 클릭 모드를 켜서 확인하세요. 배경색을 입히지 않으면 글자색은 시스템 색을 따릅니다. 모서리 둥글기를 8 이상으로 올리면 유리 느낌이 더 잘 보입니다.")
+                Text("macOS 26 이상에서 적용됩니다. 미리보기에는 반영되지 않으니 클릭 모드를 켜서 확인하세요. 배경색을 입히지 않으면 글자색은 시스템 색을 따릅니다. 여백을 가로 12, 세로 6 이상으로 넓히고 모서리 둥글기를 8 이상으로 올리면 유리 느낌이 더 잘 보입니다.")
             }
             Section {
                 Button("기본값으로 되돌리기") {
