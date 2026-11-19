@@ -36,8 +36,10 @@ final class Controller {
     // 단계마다 고른 칸. 비어 있으면 아직 화면 전체를 나눈 단계다.
     private var gridPath: [CGRect] = []
     private var gridCell: CGRect? { gridPath.last }
-    // 마지막 단계의 칸이 이 길이에 가깝게 나오도록 단계마다 열과 행의 수를 정한다.
-    private static let gridTargetCell: CGFloat = 36
+    // 긴 변이 이 길이 이하인 칸은 더 나누지 않고 클릭한다.
+    private static let gridStopCell: CGFloat = 28
+    // 한 단계에서 칸을 이 길이보다 잘게 나누지 않는다.
+    private static let gridFinestCell: CGFloat = 16
 
     func installTap() -> Bool {
         guard tap == nil else { return true }
@@ -287,13 +289,23 @@ final class Controller {
 
     // 고른 칸을 다시 나눌 열과 행의 수. 둘 다 1이면 더 나누지 않고 클릭한다.
     private static func gridDivision(of cell: CGRect, characters: Int) -> (columns: Int, rows: Int) {
-        var columns = min(max(Int((cell.width / gridTargetCell).rounded()), 1), 3)
-        var rows = min(max(Int((cell.height / gridTargetCell).rounded()), 1), 3)
-        // 두 번째 단계부터는 한 글자로 고르기 때문에 라벨 문자 수 안에서만 나눈다.
-        while columns * rows > characters {
-            if columns >= rows { columns -= 1 } else { rows -= 1 }
+        guard max(cell.width, cell.height) > gridStopCell else { return (1, 1) }
+        let maxColumns = max(Int((cell.width / gridFinestCell).rounded()), 1)
+        let maxRows = max(Int((cell.height / gridFinestCell).rounded()), 1)
+        // 두 번째 단계부터는 한 글자로 고르기 때문에 칸 수를 라벨 문자 수 이하로 둔다.
+        // 그 안에서 칸의 긴 변이 가장 짧아지는 조합을 고른다.
+        var best = (columns: 1, rows: 1)
+        var bestSide = CGFloat.infinity
+        for columns in 1...maxColumns {
+            for rows in 1...maxRows where columns * rows <= characters {
+                let side = max(cell.width / CGFloat(columns), cell.height / CGFloat(rows))
+                if side < bestSide {
+                    best = (columns, rows)
+                    bestSide = side
+                }
+            }
         }
-        return (columns, rows)
+        return best
     }
 
     private func showGrid() {
