@@ -22,14 +22,22 @@ Label input is matched by key code, not by character. It works without switching
 
 Mission Control labels were verified on macOS 27 only.
 
+## Install
+
+```sh
+brew install --cask gincheong/tap/unmouse
+```
+
+On first launch the app asks for Accessibility permission. Turn on Unmouse in System Settings > Privacy & Security > Accessibility.
+
+The released app is ad-hoc signed and not notarized. After `brew upgrade --cask unmouse`, turn Unmouse off and on again in the Accessibility list, because the signature changes with every release.
+
 ## Build and run
 
 ```sh
 ./build.sh
 open build/Unmouse.app
 ```
-
-On first launch the app asks for Accessibility permission. Turn on Unmouse in System Settings > Privacy & Security > Accessibility.
 
 ### Signing
 
@@ -41,6 +49,12 @@ If your keychain has a code signing certificate, pass its name when building. Th
 security find-identity -v -p codesigning
 UNMOUSE_SIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 ```
+
+### Releasing
+
+The cask lives in [gincheong/homebrew-tap](https://github.com/gincheong/homebrew-tap). Clone it next to this repository, or set `UNMOUSE_TAP_DIR` to its path.
+
+Bump `CFBundleShortVersionString` in `Info.plist`, then run `./release.sh`. It builds a universal app, writes `build/Unmouse.zip`, updates the version and checksum in the tap's `Casks/unmouse.rb`, and prints the commands for tagging, uploading the release, and pushing the tap.
 
 ## Usage
 

@@ -7,9 +7,14 @@ cd "$(dirname "$0")"
 IDENTITY="${UNMOUSE_SIGN_IDENTITY:--}"
 APP="build/Unmouse.app"
 
-swift build -c release
+# 배포용 빌드는 Intel 맥에서도 실행돼야 해서 release.sh가 UNMOUSE_UNIVERSAL=1로 호출한다.
+ARCH_FLAGS=()
+[[ -n "${UNMOUSE_UNIVERSAL:-}" ]] && ARCH_FLAGS=(--arch arm64 --arch x86_64)
+
+swift build -c release $ARCH_FLAGS
+BIN_DIR="$(swift build -c release $ARCH_FLAGS --show-bin-path)"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp .build/release/Unmouse "$APP/Contents/MacOS/Unmouse"
+cp "$BIN_DIR/Unmouse" "$APP/Contents/MacOS/Unmouse"
 cp Info.plist "$APP/Contents/Info.plist"
 cp icon/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 codesign --force --sign "$IDENTITY" "$APP"
