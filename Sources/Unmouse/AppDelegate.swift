@@ -7,12 +7,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let missionControl = MissionControlObserver()
     private var statusItem: NSStatusItem?
     private var permissionTimer: Timer?
+    private var settingsItem: NSMenuItem?
     private var loginItem: NSMenuItem?
+    private var quitItem: NSMenuItem?
     private var settingsWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setUpStatusItem()
         setUpMainMenu()
+        UserDefaults.standard.addObserver(self, forKeyPath: Settings.Keys.language, context: nil)
         NSWorkspace.shared.notificationCenter.addObserver(
             self, selector: #selector(appActivated(_:)),
             name: NSWorkspace.didActivateApplicationNotification, object: nil)
@@ -37,7 +40,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func start() {
         if !controller.installTap() {
-            NSLog("Unmouse: event tap 생성 실패")
+            NSLog("Unmouse: failed to create the event tap")
         }
         missionControl.onOpen = { [weak self] in self?.controller.missionControlOpened() }
         missionControl.onClose = { [weak self] in self?.controller.missionControlClosed() }
@@ -66,27 +69,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         item.button?.image = NSImage(systemSymbolName: "cursorarrow.click", accessibilityDescription: "Unmouse")
 
         let menu = NSMenu()
-        let settings = NSMenuItem(title: "설정…", action: #selector(openSettings), keyEquivalent: ",")
+        let settings = NSMenuItem(title: "", action: #selector(openSettings), keyEquivalent: ",")
         settings.target = self
         menu.addItem(settings)
-        let login = NSMenuItem(title: "로그인 시 실행", action: #selector(toggleLoginItem), keyEquivalent: "")
+        settingsItem = settings
+        let login = NSMenuItem(title: "", action: #selector(toggleLoginItem), keyEquivalent: "")
         login.target = self
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
         menu.addItem(login)
         loginItem = login
         menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Unmouse 종료", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        let quit = NSMenuItem(title: "", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(quit)
+        quitItem = quit
         item.menu = menu
         statusItem = item
+        applyLanguage()
+    }
+
+    override func observeValue(
+        forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?,
+        context: UnsafeMutableRawPointer?
+    ) {
+        DispatchQueue.main.async { self.applyLanguage() }
+    }
+
+    private func applyLanguage() {
+        settingsItem?.title = tr("Settings…", "설정…")
+        loginItem?.title = tr("Launch at Login", "로그인 시 실행")
+        quitItem?.title = tr("Quit Unmouse", "Unmouse 종료")
+        settingsWindow?.title = tr("Unmouse Settings", "Unmouse 설정")
     }
 
     // Dock 아이콘이 없는 앱이라 메뉴는 보이지 않지만, 설정 창에서 ⌘Q와 ⌘W가 동작하려면 메인 메뉴가 있어야 한다.
     private func setUpMainMenu() {
         let appMenu = NSMenu()
         appMenu.addItem(
-            NSMenuItem(title: "Unmouse 종료", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
-        let windowMenu = NSMenu(title: "윈도우")
-        windowMenu.addItem(NSMenuItem(title: "닫기", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w"))
+            NSMenuItem(title: "Quit Unmouse", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        let windowMenu = NSMenu(title: "Window")
+        windowMenu.addItem(NSMenuItem(title: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w"))
 
         let mainMenu = NSMenu()
         for submenu in [appMenu, windowMenu] {
@@ -100,7 +121,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openSettings() {
         if settingsWindow == nil {
             let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView()))
-            window.title = "Unmouse 설정"
+            window.title = tr("Unmouse Settings", "Unmouse 설정")
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false
             window.center()
@@ -119,7 +140,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 try service.register()
             }
         } catch {
-            NSLog("Unmouse: 로그인 항목 변경 실패: \(error.localizedDescription)")
+            NSLog("Unmouse: failed to change the login item: \(error.localizedDescription)")
         }
         loginItem?.state = service.status == .enabled ? .on : .off
     }

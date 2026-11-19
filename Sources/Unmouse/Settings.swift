@@ -1,5 +1,10 @@
 import AppKit
 
+// 설정 창에서 고른 언어의 문구를 돌려준다.
+func tr(_ english: String, _ korean: String) -> String {
+    Settings.language == "ko" ? korean : english
+}
+
 struct Hotkey: Equatable {
     static let modifierMask: CGEventFlags = [.maskCommand, .maskShift, .maskControl, .maskAlternate]
 
@@ -41,6 +46,7 @@ struct LabelStyle {
 
 enum Settings {
     enum Keys {
+        static let language = "language"
         static let clickHotkeyKeyCode = "clickHotkeyKeyCode"
         static let clickHotkeyModifiers = "clickHotkeyModifiers"
         static let includeMenuBar = "includeMenuBar"
@@ -73,13 +79,17 @@ enum Settings {
     // 설치된 서체 이름과 겹치지 않는 값으로 시스템 서체를 구분한다.
     static let monospacedFontFamily = ".monospaced"
     static let systemFontFamily = ".system"
-    static let fontWeights: [(key: String, title: String, weight: NSFont.Weight)] = [
-        ("light", "가늘게", .light), ("regular", "보통", .regular), ("medium", "중간", .medium),
-        ("semibold", "약간 굵게", .semibold), ("bold", "굵게", .bold), ("heavy", "아주 굵게", .heavy),
-        ("black", "가장 굵게", .black),
-    ]
+    static var fontWeights: [(key: String, title: String, weight: NSFont.Weight)] {
+        [
+            ("light", tr("Light", "가늘게"), .light), ("regular", tr("Regular", "보통"), .regular),
+            ("medium", tr("Medium", "중간"), .medium), ("semibold", tr("Semibold", "약간 굵게"), .semibold),
+            ("bold", tr("Bold", "굵게"), .bold), ("heavy", tr("Heavy", "아주 굵게"), .heavy),
+            ("black", tr("Black", "가장 굵게"), .black),
+        ]
+    }
 
     static let defaults: [String: Any] = [
+        Keys.language: "en",
         Keys.clickHotkeyKeyCode: 39,
         Keys.clickHotkeyModifiers: Int(CGEventFlags.maskCommand.rawValue),
         Keys.includeMenuBar: true,
@@ -120,6 +130,7 @@ enum Settings {
         store.register(defaults: defaults)
     }
 
+    static var language: String { store.string(forKey: Keys.language) ?? "en" }
     static var clickHotkey: Hotkey { hotkey(Keys.clickHotkeyKeyCode, Keys.clickHotkeyModifiers) }
     static var scrollHotkey: Hotkey { hotkey(Keys.scrollHotkeyKeyCode, Keys.scrollHotkeyModifiers) }
     static var gridHotkey: Hotkey { hotkey(Keys.gridHotkeyKeyCode, Keys.gridHotkeyModifiers) }

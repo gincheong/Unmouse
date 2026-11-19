@@ -54,7 +54,7 @@ if let index = CommandLine.arguments.firstIndex(of: "--scan") {
     guard let target = bundleID.flatMap({ id in running.first { $0.bundleIdentifier == id } })
         ?? (bundleID == nil ? NSWorkspace.shared.frontmostApplication : nil)
     else {
-        print("실행 중인 앱을 찾지 못함:", bundleID ?? "frontmost")
+        print("no running app found:", bundleID ?? "frontmost")
         exit(1)
     }
     AXScanner.enableAccessibility(for: target)

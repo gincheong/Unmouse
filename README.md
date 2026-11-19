@@ -87,7 +87,7 @@ The grid covers the screen that has the cursor. The modifier keys of click mode 
 
 ### Settings
 
-Open `설정…` (Settings) from the Unmouse icon in the menu bar to change shortcuts, scroll speed, automatic labels in Mission Control, and label design. The settings window is in Korean.
+Open `Settings…` from the Unmouse icon in the menu bar to change shortcuts, scroll speed, automatic labels in Mission Control, and label design. The settings window is in English by default and can be switched to Korean in the General tab.
 
 ## Limitations
 
