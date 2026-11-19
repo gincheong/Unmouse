@@ -8,6 +8,7 @@ Label input is matched by key code, not by character. It works without switching
 
 - **Click mode**: shows labels on the windows, menus, and menu bar items of the frontmost app.
 - **Scroll mode**: selects a scroll area and scrolls it with the keyboard.
+- **Grid mode**: divides the screen into a grid and clicks any position, even in apps that expose no clickable elements.
 - **Mission Control**: shows labels on window thumbnails and spaces when Mission Control opens.
 - **Label design**: label characters, font size, colors, corner radius, pointer arrow, and Liquid Glass can be changed in the settings window.
 
@@ -70,6 +71,19 @@ UNMOUSE_SIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 | `ESC` or any other key | Turn off                   |
 
 When there are several scroll areas, scrolling starts in the one under the cursor.
+
+### Grid mode
+
+| Key                  | Action                                  |
+|----------------------|-----------------------------------------|
+| `⇧⌘'`                | Turn grid mode on or off                |
+| Two label characters | Select a cell and divide it again       |
+| One more character   | Click that position                     |
+| `↩` or `Space`       | Click the center of the selected cell   |
+| `⌫`                  | Go back to the previous step            |
+| `ESC`                | Turn off                                |
+
+The grid covers the screen that has the cursor. The modifier keys of click mode work on the last key in the same way.
 
 ### Settings
 

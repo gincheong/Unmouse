@@ -15,6 +15,7 @@ struct SettingsView: View {
 
 private struct GeneralTab: View {
     @AppStorage(Settings.Keys.includeMenuBar) private var includeMenuBar = true
+    @AppStorage(Settings.Keys.gridEnabled) private var gridEnabled = true
 
     var body: some View {
         Form {
@@ -26,6 +27,15 @@ private struct GeneralTab: View {
                 Toggle("메뉴바 항목에도 라벨 표시", isOn: $includeMenuBar)
             } footer: {
                 Text("라벨의 마지막 글자를 ⇧와 함께 누르면 우클릭, ⌥는 더블클릭, ⌘는 커맨드 클릭, ⌃는 클릭 없이 커서만 이동입니다.")
+            }
+            Section {
+                Toggle("그리드 모드 사용", isOn: $gridEnabled)
+                LabeledContent("그리드 모드 단축키") {
+                    ShortcutRecorder(
+                        keyCodeKey: Settings.Keys.gridHotkeyKeyCode, modifiersKey: Settings.Keys.gridHotkeyModifiers)
+                }
+            } footer: {
+                Text("커서가 있는 화면을 격자로 나눕니다. 두 글자로 칸을 고르면 그 칸을 다시 나누고, 한 글자를 더 누르면 그 위치를 클릭합니다. ↩나 Space는 고른 칸의 중앙을 클릭하고, ⌫는 이전 단계로 돌아갑니다. 수식키는 클릭 모드와 같습니다.")
             }
         }
         .formStyle(.grouped)

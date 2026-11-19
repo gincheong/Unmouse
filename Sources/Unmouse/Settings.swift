@@ -41,6 +41,9 @@ enum Settings {
         static let scrollHotkeyModifiers = "scrollHotkeyModifiers"
         static let scrollSpeed = "scrollSpeed"
         static let scrollArrowKeys = "scrollArrowKeys"
+        static let gridEnabled = "gridEnabled"
+        static let gridHotkeyKeyCode = "gridHotkeyKeyCode"
+        static let gridHotkeyModifiers = "gridHotkeyModifiers"
         static let missionControlEnabled = "missionControlEnabled"
         static let missionControlAutoActivate = "missionControlAutoActivate"
         static let labelCharacters = "labelCharacters"
@@ -63,6 +66,9 @@ enum Settings {
         Keys.scrollHotkeyModifiers: Int(CGEventFlags([.maskCommand, .maskShift]).rawValue),
         Keys.scrollSpeed: 2.0,
         Keys.scrollArrowKeys: false,
+        Keys.gridEnabled: true,
+        Keys.gridHotkeyKeyCode: 39,
+        Keys.gridHotkeyModifiers: Int(CGEventFlags([.maskCommand, .maskShift]).rawValue),
         Keys.missionControlEnabled: true,
         Keys.missionControlAutoActivate: true,
         Keys.labelCharacters: "sadfjklewcmpgh",
@@ -88,6 +94,8 @@ enum Settings {
 
     static var clickHotkey: Hotkey { hotkey(Keys.clickHotkeyKeyCode, Keys.clickHotkeyModifiers) }
     static var scrollHotkey: Hotkey { hotkey(Keys.scrollHotkeyKeyCode, Keys.scrollHotkeyModifiers) }
+    static var gridHotkey: Hotkey { hotkey(Keys.gridHotkeyKeyCode, Keys.gridHotkeyModifiers) }
+    static var gridEnabled: Bool { store.bool(forKey: Keys.gridEnabled) }
     static var includeMenuBar: Bool { store.bool(forKey: Keys.includeMenuBar) }
     static var scrollEnabled: Bool { store.bool(forKey: Keys.scrollEnabled) }
     static var scrollSpeed: Double { max(store.double(forKey: Keys.scrollSpeed), 0.1) }
@@ -126,6 +134,8 @@ enum Settings {
 enum KeyCodes {
     static let escape: Int64 = 53
     static let delete: Int64 = 51
+    static let `return`: Int64 = 36
+    static let space: Int64 = 49
 
     private static let table: [Character: Int64] = [
         "a": 0, "s": 1, "d": 2, "f": 3, "h": 4, "g": 5, "z": 6, "x": 7, "c": 8, "v": 9,

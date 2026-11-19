@@ -10,7 +10,8 @@ final class OverlayController {
     private var windows: [NSPanel] = []
 
     // highlight는 스크롤 모드에서 선택된 영역의 테두리로 그린다.
-    func show(items: [LabelItem], highlight: CGRect? = nil, pointers: Bool = true) {
+    // cells가 true면 그리드 모드처럼 각 대상의 경계선도 그린다.
+    func show(items: [LabelItem], highlight: CGRect? = nil, pointers: Bool = true, cells: Bool = false) {
         hide()
         for screen in NSScreen.screens {
             let panel = NSPanel(
@@ -29,6 +30,7 @@ final class OverlayController {
             view.items = items.filter { view.screenAXRect.contains($0.target.point) }
             view.highlight = highlight
             view.showsPointers = pointers
+            view.showsCells = cells
             view.reload()
             panel.contentView = view
             panel.orderFrontRegardless()
@@ -84,6 +86,7 @@ final class LabelsView: NSView {
     var typed = ""
     var highlight: CGRect?
     var showsPointers = true
+    var showsCells = false
     var screenAXRect = CGRect.zero
     private var glassHost: NSView?
 
@@ -112,6 +115,13 @@ final class LabelsView: NSView {
             path.lineWidth = 3
             style.background.setStroke()
             path.stroke()
+        }
+        if showsCells {
+            style.background.withAlphaComponent(0.6).setStroke()
+            for item in items where item.label.hasPrefix(typed) {
+                let rect = item.target.frame.offsetBy(dx: -screenAXRect.minX, dy: -screenAXRect.minY)
+                NSBezierPath(rect: rect).stroke()
+            }
         }
         guard glassHost == nil, let context = NSGraphicsContext.current?.cgContext else { return }
 

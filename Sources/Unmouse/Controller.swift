@@ -6,7 +6,7 @@ enum ShortcutRecording {
 }
 
 final class Controller {
-    enum Purpose { case click, scroll }
+    enum Purpose { case click, scroll, grid }
     private enum State { case idle, scanning, picking, scrolling }
 
     // 직접 만든 스크롤 이벤트를 사용자의 휠 입력과 구분하는 표시값
@@ -31,6 +31,13 @@ final class Controller {
     private var scrollRemainder = CGVector.zero
     private var scrollTimer: Timer?
     private var lastTick = CFAbsoluteTimeGetCurrent()
+
+    private var gridScreen = CGRect.zero
+    // 단계마다 고른 칸. 비어 있으면 아직 화면 전체를 나눈 단계다.
+    private var gridPath: [CGRect] = []
+    private var gridCell: CGRect? { gridPath.last }
+    // 마지막 단계의 칸이 이 길이에 가깝게 나오도록 단계마다 열과 행의 수를 정한다.
+    private static let gridTargetCell: CGFloat = 36
 
     func installTap() -> Bool {
         guard tap == nil else { return true }
@@ -87,13 +94,18 @@ final class Controller {
         let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
         let flags = event.flags.intersection(Hotkey.modifierMask)
         let autorepeat = event.getIntegerValueField(.keyboardEventAutorepeat) != 0
-        let isClickHotkey = Settings.clickHotkey.matches(keyCode: keyCode, flags: flags)
-        let isScrollHotkey = Settings.scrollEnabled && Settings.scrollHotkey.matches(keyCode: keyCode, flags: flags)
+        var requested: Purpose?
+        if Settings.clickHotkey.matches(keyCode: keyCode, flags: flags) {
+            requested = .click
+        } else if Settings.scrollEnabled, Settings.scrollHotkey.matches(keyCode: keyCode, flags: flags) {
+            requested = .scroll
+        } else if Settings.gridEnabled, Settings.gridHotkey.matches(keyCode: keyCode, flags: flags) {
+            requested = .grid
+        }
 
-        if isClickHotkey || isScrollHotkey {
+        if let requested {
             swallowedKeys.insert(keyCode)
             guard !autorepeat else { return true }
-            let requested: Purpose = isClickHotkey ? .click : .scroll
             let toggledOff = state != .idle && purpose == requested
             deactivate()
             if !toggledOff { activate(requested) }
@@ -123,9 +135,20 @@ final class Controller {
 
     private func handlePickingKey(_ keyCode: Int64, flags: CGEventFlags) -> Bool {
         if keyCode == KeyCodes.delete {
+            swallowedKeys.insert(keyCode)
+            if typed.isEmpty, !gridPath.isEmpty {
+                gridPath.removeLast()
+                showGrid()
+                return true
+            }
             if !typed.isEmpty { typed.removeLast() }
             overlay.update(typed: typed)
+            return true
+        }
+        if let gridCell, keyCode == KeyCodes.return || keyCode == KeyCodes.space {
             swallowedKeys.insert(keyCode)
+            deactivate()
+            Clicker.click(at: CGPoint(x: gridCell.midX, y: gridCell.midY), modifiers: flags)
             return true
         }
         guard let character = KeyCodes.character(for: keyCode), Settings.labelCharacters.contains(character) else {
@@ -144,6 +167,12 @@ final class Controller {
         typed = candidate
         guard let match = items.first(where: { $0.label == typed }) else {
             overlay.update(typed: typed)
+            return true
+        }
+        let frame = match.target.frame
+        if purpose == .grid, Self.gridDivision(of: frame, characters: Settings.labelCharacters.count) != (1, 1) {
+            gridPath.append(frame)
+            showGrid()
             return true
         }
         deactivate()
@@ -193,8 +222,12 @@ final class Controller {
     }
 
     private func activate(_ purpose: Purpose, retries: Int = 0, requireMissionControl: Bool = false) {
-        state = .scanning
         self.purpose = purpose
+        if purpose == .grid {
+            beginGrid()
+            return
+        }
+        state = .scanning
         generation += 1
         let current = generation
         let frontmost = NSWorkspace.shared.frontmostApplication
@@ -241,6 +274,60 @@ final class Controller {
         typed = ""
         overlay.show(items: items)
         state = .picking
+    }
+
+    private func beginGrid() {
+        let cursor = CGEvent(source: nil)?.location ?? .zero
+        let screens = NSScreen.screens.map { AXScanner.axRect(of: $0) }
+        guard let screen = screens.first(where: { $0.contains(cursor) }) ?? screens.first else { return }
+        gridScreen = screen
+        gridPath = []
+        showGrid()
+    }
+
+    // 고른 칸을 다시 나눌 열과 행의 수. 둘 다 1이면 더 나누지 않고 클릭한다.
+    private static func gridDivision(of cell: CGRect, characters: Int) -> (columns: Int, rows: Int) {
+        var columns = min(max(Int((cell.width / gridTargetCell).rounded()), 1), 3)
+        var rows = min(max(Int((cell.height / gridTargetCell).rounded()), 1), 3)
+        // 두 번째 단계부터는 한 글자로 고르기 때문에 라벨 문자 수 안에서만 나눈다.
+        while columns * rows > characters {
+            if columns >= rows { columns -= 1 } else { rows -= 1 }
+        }
+        return (columns, rows)
+    }
+
+    private func showGrid() {
+        let characters = Settings.labelCharacters
+        let region = gridCell ?? gridScreen
+        let columns: Int
+        let rows: Int
+        if gridCell == nil {
+            columns = min(characters.count, max(Int(region.width / 90), 2))
+            rows = min(characters.count, max(Int(region.height / 60), 2))
+        } else {
+            (columns, rows) = Self.gridDivision(of: region, characters: characters.count)
+        }
+        let size = CGSize(width: region.width / CGFloat(columns), height: region.height / CGFloat(rows))
+
+        items = (0..<rows).flatMap { row in
+            (0..<columns).map { column in
+                let label =
+                    gridCell == nil
+                    ? String([characters[row], characters[column]]) : String(characters[row * columns + column])
+                let frame = CGRect(
+                    x: region.minX + CGFloat(column) * size.width, y: region.minY + CGFloat(row) * size.height,
+                    width: size.width, height: size.height)
+                return LabelItem(label: label, target: Target(frame: frame))
+            }
+        }
+        typed = ""
+        state = .picking
+        // 라벨이 많아서 그리는 데 시간이 걸린다. event tap 콜백 안에서 그리면 tap이 시간 초과로 꺼진다.
+        let current = generation
+        DispatchQueue.main.async { [items, gridCell] in
+            guard self.generation == current, self.state == .picking else { return }
+            self.overlay.show(items: items, highlight: gridCell, pointers: false, cells: true)
+        }
     }
 
     private func beginScrolling(_ targets: [Target]) {
@@ -323,6 +410,7 @@ final class Controller {
         inMissionControl = false
         items = []
         typed = ""
+        gridPath = []
         scrollTargets = []
         heldScroll = [:]
         scrollTimer?.invalidate()
