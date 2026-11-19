@@ -25,7 +25,7 @@ private struct GeneralTab: View {
                 }
                 Toggle("메뉴바 항목에도 라벨 표시", isOn: $includeMenuBar)
             } footer: {
-                Text("라벨의 마지막 글자를 ⇧와 함께 누르면 우클릭, ⌥는 더블클릭, ⌘는 커맨드 클릭입니다.")
+                Text("라벨의 마지막 글자를 ⇧와 함께 누르면 우클릭, ⌥는 더블클릭, ⌘는 커맨드 클릭, ⌃는 클릭 없이 커서만 이동입니다.")
             }
         }
         .formStyle(.grouped)

@@ -332,8 +332,9 @@ final class Controller {
 }
 
 enum Clicker {
-    // ⇧ 우클릭, ⌥ 더블클릭, ⌘ 커맨드 클릭
+    // ⇧ 우클릭, ⌥ 더블클릭, ⌘ 커맨드 클릭, ⌃ 클릭 없이 커서만 이동
     static func click(at point: CGPoint, modifiers: CGEventFlags) {
+        let hoverOnly = modifiers.contains(.maskControl)
         let rightClick = modifiers.contains(.maskShift)
         let clickCount = modifiers.contains(.maskAlternate) ? 2 : 1
         let flags: CGEventFlags = modifiers.contains(.maskCommand) ? .maskCommand : []
@@ -352,6 +353,7 @@ enum Clicker {
                 event.post(tap: .cghidEventTap)
             }
             post(.mouseMoved, clickState: 0)
+            if hoverOnly { return }
             // 커서가 도착한 뒤에 눌러야 hover 상태를 요구하는 요소도 클릭된다.
             usleep(20_000)
             for count in 1...clickCount {

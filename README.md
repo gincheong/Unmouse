@@ -52,6 +52,7 @@ UNMOUSE_SIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 | `⇧` + last character | Right-click                     |
 | `⌥` + last character | Double-click                    |
 | `⌘` + last character | Command-click                   |
+| `⌃` + last character | Move the cursor without clicking |
 | `⌫`                  | Delete the last typed character |
 | `ESC`                | Turn off                        |
 
