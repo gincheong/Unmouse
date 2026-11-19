@@ -1,6 +1,8 @@
 import AppKit
 
 Settings.registerDefaults()
+Settings.loadConfigFile()
+Settings.saveConfigFile()
 
 if CommandLine.arguments.contains("--check") {
     let labels = LabelGenerator.labels(count: 20, characters: Settings.labelCharacters)

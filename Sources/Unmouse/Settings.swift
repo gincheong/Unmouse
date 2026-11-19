@@ -156,6 +156,53 @@ enum Settings {
         store.register(defaults: defaults)
     }
 
+    static let configURL = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent(".config/unmouse/config.json")
+    private static var configData: Data?
+    private static var configBroken = false
+
+    // 파일에는 기본값과 다른 키만 있으므로, 파일에 없는 키는 기본값으로 되돌린다.
+    static func loadConfigFile() {
+        guard let data = try? Data(contentsOf: configURL) else { return }
+        guard let values = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
+            // 손으로 고치다 깨진 파일을 덮어쓰지 않도록 이번 실행에서는 저장하지 않는다.
+            configBroken = true
+            NSLog("Unmouse: failed to parse \(configURL.path)")
+            return
+        }
+        configData = data
+        for key in defaults.keys {
+            if let value = values[key] {
+                store.set(value, forKey: key)
+            } else {
+                store.removeObject(forKey: key)
+            }
+        }
+    }
+
+    static func saveConfigFile() {
+        guard !configBroken else { return }
+        var overrides: [String: Any] = [:]
+        for (key, value) in defaults {
+            guard let current = store.object(forKey: key), !(current as AnyObject).isEqual(value) else { continue }
+            overrides[key] = current
+        }
+        if overrides.isEmpty && !FileManager.default.fileExists(atPath: configURL.path) { return }
+        guard var data = try? JSONSerialization.data(withJSONObject: overrides, options: [.prettyPrinted, .sortedKeys])
+        else { return }
+        data.append(0x0A)
+        // 설정과 무관한 UserDefaults 변경에도 호출되므로 내용이 같으면 쓰지 않는다.
+        guard data != configData else { return }
+        do {
+            try FileManager.default.createDirectory(
+                at: configURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try data.write(to: configURL, options: .atomic)
+            configData = data
+        } catch {
+            NSLog("Unmouse: failed to write \(configURL.path): \(error.localizedDescription)")
+        }
+    }
+
     static var language: String { store.string(forKey: Keys.language) ?? "en" }
     static var clickHotkey: Hotkey { hotkey(Keys.clickHotkeyKeyCode, Keys.clickHotkeyModifiers) }
     static var scrollHotkey: Hotkey { hotkey(Keys.scrollHotkeyKeyCode, Keys.scrollHotkeyModifiers) }
