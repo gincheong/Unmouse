@@ -279,9 +279,19 @@ final class Controller {
     }
 
     private func beginGrid() {
-        let cursor = CGEvent(source: nil)?.location ?? .zero
         let screens = NSScreen.screens.map { AXScanner.axRect(of: $0) }
-        guard let screen = screens.first(where: { $0.contains(cursor) }) ?? screens.first else { return }
+        func overlap(_ screen: CGRect, _ window: CGRect) -> CGFloat {
+            let shared = screen.intersection(window)
+            return shared.isNull ? 0 : shared.width * shared.height
+        }
+        // 포커스된 창이 가장 많이 걸친 디스플레이를 나눈다. 창을 읽지 못하면 커서가 있는 디스플레이를 쓴다.
+        var focused: CGRect?
+        if let window = NSWorkspace.shared.frontmostApplication.flatMap({ AXScanner().focusedWindowFrame(of: $0) }) {
+            focused = screens.max { overlap($0, window) < overlap($1, window) }
+                .flatMap { overlap($0, window) > 0 ? $0 : nil }
+        }
+        let cursor = CGEvent(source: nil)?.location ?? .zero
+        guard let screen = focused ?? screens.first(where: { $0.contains(cursor) }) ?? screens.first else { return }
         gridScreen = screen
         gridPath = []
         showGrid()

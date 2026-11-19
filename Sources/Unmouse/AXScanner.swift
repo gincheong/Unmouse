@@ -93,6 +93,15 @@ final class AXScanner {
         return finish()
     }
 
+    // event tap 콜백 안에서 부르기 때문에 응답이 없는 앱을 오래 기다리지 않는다.
+    func focusedWindowFrame(of app: NSRunningApplication) -> CGRect? {
+        let appElement = AXUIElementCreateApplication(app.processIdentifier)
+        AXUIElementSetMessagingTimeout(appElement, 0.1)
+        guard let window = element(appElement, "AXFocusedWindow") ?? element(appElement, "AXMainWindow")
+        else { return nil }
+        return frame(of: window)
+    }
+
     func isMissionControlOpen() -> Bool {
         !missionControlGroups().isEmpty
     }
