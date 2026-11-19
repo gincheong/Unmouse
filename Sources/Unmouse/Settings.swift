@@ -44,6 +44,16 @@ struct LabelStyle {
     var font: NSFont { Settings.labelFont(family: fontFamily, weight: fontWeight, size: fontSize) }
 }
 
+struct GridStyle {
+    // 칸이 작으면 이 크기보다 작게 그린다.
+    var fontSize: CGFloat
+    var background: NSColor
+    var backgroundOpacity: CGFloat
+    var text: NSColor
+    var line: NSColor
+    var lineOpacity: CGFloat
+}
+
 enum Settings {
     enum Keys {
         static let language = "language"
@@ -74,6 +84,12 @@ enum Settings {
         static let labelGlass = "labelGlass"
         static let labelGlassTint = "labelGlassTint"
         static let labelPointer = "labelPointer"
+        static let gridFontSize = "gridFontSize"
+        static let gridBackgroundColor = "gridBackgroundColor"
+        static let gridBackgroundOpacity = "gridBackgroundOpacity"
+        static let gridTextColor = "gridTextColor"
+        static let gridLineColor = "gridLineColor"
+        static let gridLineOpacity = "gridLineOpacity"
     }
 
     // 설치된 서체 이름과 겹치지 않는 값으로 시스템 서체를 구분한다.
@@ -117,6 +133,16 @@ enum Settings {
         Keys.labelGlass: false,
         Keys.labelGlassTint: true,
         Keys.labelPointer: true,
+        Keys.gridFontSize: 13.0,
+        Keys.gridBackgroundColor: "#FFD60A",
+        Keys.gridBackgroundOpacity: 0.9,
+        Keys.gridTextColor: "#000000",
+        Keys.gridLineColor: "#FFD60A",
+        Keys.gridLineOpacity: 0.6,
+    ]
+    static let gridStyleKeys = [
+        Keys.gridFontSize, Keys.gridBackgroundColor, Keys.gridBackgroundOpacity, Keys.gridTextColor,
+        Keys.gridLineColor, Keys.gridLineOpacity,
     ]
     static let labelStyleKeys = [
         Keys.labelCharacters, Keys.labelFontFamily, Keys.labelFontWeight, Keys.labelFontSize, Keys.labelPaddingWidth,
@@ -148,6 +174,16 @@ enum Settings {
         var seen = Set<Character>()
         let chars = raw.lowercased().filter { KeyCodes.code(for: $0) != nil && seen.insert($0).inserted }
         return chars.count >= 2 ? Array(chars) : Array(fallback)
+    }
+
+    static var gridStyle: GridStyle {
+        GridStyle(
+            fontSize: max(store.double(forKey: Keys.gridFontSize), 6),
+            background: NSColor(hex: store.string(forKey: Keys.gridBackgroundColor) ?? "") ?? .systemYellow,
+            backgroundOpacity: min(max(store.double(forKey: Keys.gridBackgroundOpacity), 0), 1),
+            text: NSColor(hex: store.string(forKey: Keys.gridTextColor) ?? "") ?? .black,
+            line: NSColor(hex: store.string(forKey: Keys.gridLineColor) ?? "") ?? .systemYellow,
+            lineOpacity: min(max(store.double(forKey: Keys.gridLineOpacity), 0), 1))
     }
 
     static var labelStyle: LabelStyle {

@@ -87,7 +87,7 @@ The grid covers the screen that has the cursor. The modifier keys of click mode 
 
 ### Settings
 
-Open `Settings…` from the Unmouse icon in the menu bar to change shortcuts, scroll speed, automatic labels in Mission Control, and label design. The settings window is in English by default and can be switched to Korean in the General tab.
+Open `Settings…` from the Unmouse icon in the menu bar to change shortcuts, scroll speed, automatic labels in Mission Control, label design, and grid design. The settings window is in English by default and can be switched to Korean in the General tab.
 
 ## Limitations
 
@@ -106,6 +106,7 @@ $BIN --check                       # permission state and generated labels
 $BIN --scan [bundle id] [--scroll] # number of labeled elements and scan time
 $BIN --mission-control             # whether Mission Control is open, and its elements
 $BIN --preview [bundle id]         # show labels on screen for 3 seconds
+$BIN --preview --grid              # show sample grid cells for 3 seconds
 ```
 
 These run from the terminal, so the terminal app needs Accessibility permission.

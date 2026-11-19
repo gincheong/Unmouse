@@ -97,7 +97,7 @@ final class LabelsView: NSView {
         glassHost?.removeFromSuperview()
         glassHost = nil
         let style = Settings.labelStyle
-        if style.glass, #available(macOS 26.0, *) {
+        if style.glass, !showsCells, #available(macOS 26.0, *) {
             let host = NSHostingView(rootView: GlassLabels(layouts: layouts(style: style), style: style))
             host.frame = bounds
             addSubview(host)
@@ -107,6 +107,10 @@ final class LabelsView: NSView {
     }
 
     override func draw(_ dirtyRect: NSRect) {
+        if showsCells {
+            drawGrid()
+            return
+        }
         let style = Settings.labelStyle
 
         if let highlight {
@@ -115,13 +119,6 @@ final class LabelsView: NSView {
             path.lineWidth = 3
             style.background.setStroke()
             path.stroke()
-        }
-        if showsCells {
-            style.background.withAlphaComponent(0.6).setStroke()
-            for item in items where item.label.hasPrefix(typed) {
-                let rect = item.target.frame.offsetBy(dx: -screenAXRect.minX, dy: -screenAXRect.minY)
-                NSBezierPath(rect: rect).stroke()
-            }
         }
         guard glassHost == nil, let context = NSGraphicsContext.current?.cgContext else { return }
 
@@ -143,6 +140,44 @@ final class LabelsView: NSView {
                 range: NSRange(location: 0, length: layout.typedCount))
             let size = text.size()
             text.draw(at: CGPoint(x: layout.box.midX - size.width / 2, y: layout.box.midY - size.height / 2))
+        }
+    }
+
+    // 그리드는 칸 크기가 정해져 있어서 라벨 설정의 글자 크기, 여백, 유리를 쓰지 않고 칸에 맞춰 그린다.
+    private func drawGrid() {
+        let grid = Settings.gridStyle
+        let label = Settings.labelStyle
+        let cells = items.filter { $0.label.hasPrefix(typed) }
+            .map { ($0.label, $0.target.frame.offsetBy(dx: -screenAXRect.minX, dy: -screenAXRect.minY)) }
+
+        grid.line.withAlphaComponent(grid.lineOpacity).setStroke()
+        for (_, cell) in cells { NSBezierPath(rect: cell).stroke() }
+        if let highlight {
+            let rect = highlight.offsetBy(dx: -screenAXRect.minX, dy: -screenAXRect.minY)
+            let path = NSBezierPath(rect: rect)
+            path.lineWidth = 2
+            grid.line.setStroke()
+            path.stroke()
+        }
+
+        for (name, cell) in cells {
+            let string = label.uppercase ? name.uppercased() : name
+            // 작은 칸에서는 글자가 칸 안에 들어가도록 줄인다.
+            let fitted = min(cell.height * 0.85, cell.width * 1.3 / CGFloat(string.count))
+            let font = Settings.labelFont(
+                family: label.fontFamily, weight: label.fontWeight, size: max(min(grid.fontSize, fitted), 6))
+            let text = NSMutableAttributedString(string: string, attributes: [.font: font, .foregroundColor: grid.text])
+            text.addAttribute(
+                .foregroundColor, value: grid.text.withAlphaComponent(0.3),
+                range: NSRange(location: 0, length: typed.count))
+            let size = text.size()
+            let box = CGRect(
+                x: cell.midX - size.width / 2 - 2, y: cell.midY - size.height / 2, width: size.width + 4,
+                height: size.height
+            ).intersection(cell.insetBy(dx: 1, dy: 1))
+            grid.background.withAlphaComponent(grid.backgroundOpacity).setFill()
+            NSBezierPath(roundedRect: box, xRadius: 3, yRadius: 3).fill()
+            text.draw(at: CGPoint(x: cell.midX - size.width / 2, y: cell.midY - size.height / 2))
         }
     }
 

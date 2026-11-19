@@ -9,11 +9,12 @@ if CommandLine.arguments.contains("--check") {
     exit(0)
 }
 
-// 사용법: Unmouse --preview [-labelGlass YES ...]. 주 화면 왼쪽 위에 견본 라벨을 3초 동안 띄운다.
+// 사용법: Unmouse --preview [--grid] [-labelGlass YES ...]. 주 화면 왼쪽 위에 견본 라벨을 3초 동안 띄운다.
 if CommandLine.arguments.contains("--preview") {
     let preview = NSApplication.shared
     preview.setActivationPolicy(.accessory)
     var samples: [Target] = []
+    let grid = CommandLine.arguments.contains("--grid")
     // bundle id를 주면 견본 대신 그 앱의 실제 요소에 라벨을 띄운다.
     let previewID = CommandLine.arguments.drop { $0 != "--preview" }.dropFirst().first { !$0.hasPrefix("-") }
     if let previewID, let target = NSWorkspace.shared.runningApplications.first(where: { $0.bundleIdentifier == previewID }) {
@@ -21,6 +22,16 @@ if CommandLine.arguments.contains("--preview") {
         let bounds = samples.reduce(CGRect.null) { $0.union($1.frame) }.insetBy(dx: -30, dy: -30)
         print("\(Int(bounds.minX)),\(Int(bounds.minY)),\(Int(bounds.width)),\(Int(bounds.height))")
         fflush(stdout)
+    } else if grid {
+        // 그리드의 단계별 칸 크기를 한 줄씩 띄운다.
+        var y: CGFloat = 120
+        for size in [CGSize(width: 229, height: 129), CGSize(width: 57, height: 43), CGSize(width: 14, height: 14)] {
+            for column in 0..<6 {
+                samples.append(Target(frame: CGRect(
+                    x: 100 + CGFloat(column) * size.width, y: y, width: size.width, height: size.height)))
+            }
+            y += size.height + 20
+        }
     } else {
         for row in 0..<4 {
             for column in 0..<6 {
@@ -32,7 +43,7 @@ if CommandLine.arguments.contains("--preview") {
     }
     let labels = LabelGenerator.labels(count: samples.count, characters: Settings.labelCharacters)
     let overlay = OverlayController()
-    overlay.show(items: zip(labels, samples).map { LabelItem(label: $0, target: $1) })
+    overlay.show(items: zip(labels, samples).map { LabelItem(label: $0, target: $1) }, pointers: !grid, cells: grid)
     DispatchQueue.main.asyncAfter(deadline: .now() + 3) { exit(0) }
     preview.run()
 }

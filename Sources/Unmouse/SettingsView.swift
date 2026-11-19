@@ -7,6 +7,7 @@ struct SettingsView: View {
     var body: some View {
         TabView {
             GeneralTab().tabItem { Label(tr("General", "일반"), systemImage: "gearshape") }
+            GridTab().tabItem { Label(tr("Grid", "그리드"), systemImage: "squareshape.split.3x3") }
             ScrollTab().tabItem { Label(tr("Scroll", "스크롤"), systemImage: "arrow.up.arrow.down") }
             MissionControlTab().tabItem { Label("Mission Control", systemImage: "rectangle.3.group") }
             LabelTab().tabItem { Label(tr("Labels", "라벨"), systemImage: "tag") }
@@ -19,7 +20,6 @@ struct SettingsView: View {
 
 private struct GeneralTab: View {
     @AppStorage(Settings.Keys.includeMenuBar) private var includeMenuBar = true
-    @AppStorage(Settings.Keys.gridEnabled) private var gridEnabled = true
     @AppStorage(Settings.Keys.language) private var language = "en"
 
     var body: some View {
@@ -43,6 +43,28 @@ private struct GeneralTab: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             Section {
+                Button(tr("Quit Unmouse", "Unmouse 종료")) { NSApp.terminate(nil) }
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
+
+private struct GridTab: View {
+    @AppStorage(Settings.Keys.gridEnabled) private var gridEnabled = true
+    @AppStorage(Settings.Keys.gridFontSize) private var fontSize = 13.0
+    @AppStorage(Settings.Keys.gridBackgroundColor) private var background = "#FFD60A"
+    @AppStorage(Settings.Keys.gridBackgroundOpacity) private var backgroundOpacity = 0.9
+    @AppStorage(Settings.Keys.gridTextColor) private var text = "#000000"
+    @AppStorage(Settings.Keys.gridLineColor) private var line = "#FFD60A"
+    @AppStorage(Settings.Keys.gridLineOpacity) private var lineOpacity = 0.6
+    @AppStorage(Settings.Keys.labelFontFamily) private var fontFamily = Settings.monospacedFontFamily
+    @AppStorage(Settings.Keys.labelFontWeight) private var fontWeight = "bold"
+    @AppStorage(Settings.Keys.labelUppercase) private var uppercase = true
+
+    var body: some View {
+        Form {
+            Section {
                 Toggle(tr("Enable grid mode", "그리드 모드 사용"), isOn: $gridEnabled)
                 LabeledContent(tr("Grid mode shortcut", "그리드 모드 단축키")) {
                     ShortcutRecorder(
@@ -55,7 +77,53 @@ private struct GeneralTab: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             Section {
-                Button(tr("Quit Unmouse", "Unmouse 종료")) { NSApp.terminate(nil) }
+                LabeledContent(tr("Preview", "미리보기")) {
+                    HStack(spacing: 0) {
+                        ForEach(["sa", "sd", "sf"], id: \.self) { sample in
+                            Text(uppercase ? sample.uppercased() : sample)
+                                .font(Font(Settings.labelFont(family: fontFamily, weight: fontWeight, size: fontSize) as CTFont))
+                                .foregroundColor(color(text))
+                                .padding(.horizontal, 2)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 3).fill(color(background).opacity(backgroundOpacity)))
+                                .frame(width: 64, height: 44)
+                                .border(color(line).opacity(lineOpacity), width: 1)
+                        }
+                    }
+                }
+                LabeledContent(tr("Font size", "글자 크기")) {
+                    HStack {
+                        Slider(value: $fontSize, in: 8...24, step: 1)
+                        Text("\(Int(fontSize))").monospacedDigit().frame(width: 28, alignment: .trailing)
+                    }
+                }
+                ColorPicker(tr("Background color", "배경색"), selection: colorBinding($background), supportsOpacity: false)
+                LabeledContent(tr("Background opacity", "배경 불투명도")) {
+                    HStack {
+                        Slider(value: $backgroundOpacity, in: 0...1, step: 0.05)
+                        Text("\(Int((backgroundOpacity * 100).rounded()))%").monospacedDigit()
+                            .frame(width: 40, alignment: .trailing)
+                    }
+                }
+                ColorPicker(tr("Text color", "글자색"), selection: colorBinding($text), supportsOpacity: false)
+                ColorPicker(tr("Line color", "선 색"), selection: colorBinding($line), supportsOpacity: false)
+                LabeledContent(tr("Line opacity", "선 불투명도")) {
+                    HStack {
+                        Slider(value: $lineOpacity, in: 0...1, step: 0.05)
+                        Text("\(Int((lineOpacity * 100).rounded()))%").monospacedDigit()
+                            .frame(width: 40, alignment: .trailing)
+                    }
+                }
+            } footer: {
+                Text(tr("Grid labels use the font and weight from the Labels tab, but not its font size, padding, or Liquid Glass. In small cells the text shrinks to fit.", "그리드 라벨은 라벨 탭의 서체와 굵기를 따르고, 글자 크기와 여백, Liquid Glass는 따르지 않습니다. 작은 칸에서는 글자가 칸에 맞게 줄어듭니다."))
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            Section {
+                Button(tr("Reset to defaults", "기본값으로 되돌리기")) {
+                    Settings.gridStyleKeys.forEach { UserDefaults.standard.removeObject(forKey: $0) }
+                }
             }
         }
         .formStyle(.grouped)
@@ -223,15 +291,16 @@ private struct LabelTab: View {
         .formStyle(.grouped)
     }
 
-    private func color(_ hex: String) -> Color {
-        Color(nsColor: NSColor(hex: hex) ?? .black)
-    }
+}
 
-    private func colorBinding(_ hex: Binding<String>) -> Binding<Color> {
-        Binding(
-            get: { color(hex.wrappedValue) },
-            set: { hex.wrappedValue = NSColor($0).hexString })
-    }
+private func color(_ hex: String) -> Color {
+    Color(nsColor: NSColor(hex: hex) ?? .black)
+}
+
+private func colorBinding(_ hex: Binding<String>) -> Binding<Color> {
+    Binding(
+        get: { color(hex.wrappedValue) },
+        set: { hex.wrappedValue = NSColor($0).hexString })
 }
 
 private struct PointerShape: Shape {
