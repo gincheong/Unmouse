@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setUpStatusItem()
+        setUpMainMenu()
         NSWorkspace.shared.notificationCenter.addObserver(
             self, selector: #selector(appActivated(_:)),
             name: NSWorkspace.didActivateApplicationNotification, object: nil)
@@ -77,6 +78,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: "Unmouse 종료", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         item.menu = menu
         statusItem = item
+    }
+
+    // Dock 아이콘이 없는 앱이라 메뉴는 보이지 않지만, 설정 창에서 ⌘Q와 ⌘W가 동작하려면 메인 메뉴가 있어야 한다.
+    private func setUpMainMenu() {
+        let appMenu = NSMenu()
+        appMenu.addItem(
+            NSMenuItem(title: "Unmouse 종료", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        let windowMenu = NSMenu(title: "윈도우")
+        windowMenu.addItem(NSMenuItem(title: "닫기", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w"))
+
+        let mainMenu = NSMenu()
+        for submenu in [appMenu, windowMenu] {
+            let item = NSMenuItem()
+            item.submenu = submenu
+            mainMenu.addItem(item)
+        }
+        NSApp.mainMenu = mainMenu
     }
 
     @objc private func openSettings() {

@@ -43,6 +43,9 @@ private struct GeneralTab: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+            Section {
+                Button("Unmouse 종료") { NSApp.terminate(nil) }
+            }
         }
         .formStyle(.grouped)
     }
