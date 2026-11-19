@@ -27,6 +27,8 @@ struct LabelStyle {
     // 글자 크기에 더하는 상자의 가로, 세로 길이
     var padding: CGSize
     var background: NSColor
+    // 유리를 쓰지 않는 라벨의 상자에만 적용한다.
+    var backgroundOpacity: CGFloat
     var text: NSColor
     var cornerRadius: CGFloat
     var uppercase: Bool
@@ -59,6 +61,7 @@ enum Settings {
         static let labelPaddingWidth = "labelPaddingWidth"
         static let labelPaddingHeight = "labelPaddingHeight"
         static let labelBackgroundColor = "labelBackgroundColor"
+        static let labelBackgroundOpacity = "labelBackgroundOpacity"
         static let labelTextColor = "labelTextColor"
         static let labelCornerRadius = "labelCornerRadius"
         static let labelUppercase = "labelUppercase"
@@ -97,6 +100,7 @@ enum Settings {
         Keys.labelPaddingWidth: 6.0,
         Keys.labelPaddingHeight: 2.0,
         Keys.labelBackgroundColor: "#FFD60A",
+        Keys.labelBackgroundOpacity: 1.0,
         Keys.labelTextColor: "#000000",
         Keys.labelCornerRadius: 3.0,
         Keys.labelUppercase: true,
@@ -106,7 +110,7 @@ enum Settings {
     ]
     static let labelStyleKeys = [
         Keys.labelCharacters, Keys.labelFontFamily, Keys.labelFontWeight, Keys.labelFontSize, Keys.labelPaddingWidth,
-        Keys.labelPaddingHeight, Keys.labelBackgroundColor, Keys.labelTextColor,
+        Keys.labelPaddingHeight, Keys.labelBackgroundColor, Keys.labelBackgroundOpacity, Keys.labelTextColor,
         Keys.labelCornerRadius, Keys.labelUppercase, Keys.labelGlass, Keys.labelGlassTint, Keys.labelPointer,
     ]
 
@@ -144,6 +148,7 @@ enum Settings {
                 width: max(store.double(forKey: Keys.labelPaddingWidth), 0),
                 height: max(store.double(forKey: Keys.labelPaddingHeight), 0)),
             background: NSColor(hex: store.string(forKey: Keys.labelBackgroundColor) ?? "") ?? .systemYellow,
+            backgroundOpacity: min(max(store.double(forKey: Keys.labelBackgroundOpacity), 0), 1),
             text: NSColor(hex: store.string(forKey: Keys.labelTextColor) ?? "") ?? .black,
             cornerRadius: max(store.double(forKey: Keys.labelCornerRadius), 0),
             uppercase: store.bool(forKey: Keys.labelUppercase),

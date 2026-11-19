@@ -129,7 +129,7 @@ final class LabelsView: NSView {
         for layout in layouts(style: style) {
             let outline = layout.outline().cgPath
             context.addPath(outline)
-            context.setFillColor(style.background.cgColor)
+            context.setFillColor(style.background.withAlphaComponent(style.backgroundOpacity).cgColor)
             context.fillPath()
             context.addPath(outline)
             context.setStrokeColor(style.text.withAlphaComponent(0.45).cgColor)

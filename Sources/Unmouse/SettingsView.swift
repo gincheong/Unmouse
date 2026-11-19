@@ -95,6 +95,7 @@ private struct LabelTab: View {
     @AppStorage(Settings.Keys.labelPaddingWidth) private var paddingWidth = 6.0
     @AppStorage(Settings.Keys.labelPaddingHeight) private var paddingHeight = 2.0
     @AppStorage(Settings.Keys.labelBackgroundColor) private var background = "#FFD60A"
+    @AppStorage(Settings.Keys.labelBackgroundOpacity) private var backgroundOpacity = 1.0
     @AppStorage(Settings.Keys.labelTextColor) private var text = "#000000"
     @AppStorage(Settings.Keys.labelCornerRadius) private var cornerRadius = 3.0
     @AppStorage(Settings.Keys.labelUppercase) private var uppercase = true
@@ -111,7 +112,7 @@ private struct LabelTab: View {
                             VStack(spacing: -1) {
                                 if pointer {
                                     PointerShape()
-                                        .fill(color(background))
+                                        .fill(color(background).opacity(backgroundOpacity))
                                         .frame(width: max(4, fontSize * 0.4) * 1.6, height: max(4, fontSize * 0.4))
                                 }
                                 Text(uppercase ? sample.uppercased() : sample)
@@ -120,7 +121,8 @@ private struct LabelTab: View {
                                     .padding(.horizontal, paddingWidth / 2)
                                     .padding(.vertical, paddingHeight / 2)
                                     .background(
-                                        RoundedRectangle(cornerRadius: cornerRadius).fill(color(background)))
+                                        RoundedRectangle(cornerRadius: cornerRadius)
+                                            .fill(color(background).opacity(backgroundOpacity)))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: cornerRadius)
                                             .stroke(color(text).opacity(0.45), lineWidth: 1))
@@ -159,6 +161,14 @@ private struct LabelTab: View {
                     }
                 }
                 ColorPicker("배경색", selection: colorBinding($background), supportsOpacity: false)
+                LabeledContent("배경 불투명도") {
+                    HStack {
+                        Slider(value: $backgroundOpacity, in: 0...1, step: 0.05)
+                        Text("\(Int((backgroundOpacity * 100).rounded()))%").monospacedDigit()
+                            .frame(width: 40, alignment: .trailing)
+                    }
+                }
+                .disabled(glass)
                 ColorPicker("글자색", selection: colorBinding($text), supportsOpacity: false)
                 LabeledContent("모서리 둥글기") {
                     HStack {
