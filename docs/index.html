@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unmouse: click anything on macOS with the keyboard</title>
+<meta name="description" content="Unmouse is a free, open-source macOS app for clicking buttons and links with the keyboard only.">
+<meta property="og:title" content="Unmouse">
+<meta property="og:description" content="Click anything on macOS with the keyboard.">
+<meta property="og:image" content="https://gincheong.github.io/Unmouse/icon.png">
+<link rel="icon" href="icon.png">
+<style>
+  :root {
+    --bg: #fbfaf7;
+    --surface: #ffffff;
+    --border: #e4e1da;
+    --text: #1c1b19;
+    --muted: #6b6860;
+    --label: #ffd60a;
+    --label-border: #8c7606;
+    --label-text: #000000;
+    --accent: #1c1b19;
+    --accent-text: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141414;
+      --surface: #1e1e1e;
+      --border: #333230;
+      --text: #f2f0eb;
+      --muted: #a09d95;
+      --accent: #f2f0eb;
+      --accent-text: #141414;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 880px; margin: 0 auto; padding: 72px 20px 48px; }
+  a { color: inherit; }
+  kbd {
+    font: 600 0.85em ui-monospace, "SF Mono", Menlo, monospace;
+    padding: 2px 6px;
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    background: var(--surface);
+    white-space: nowrap;
+  }
+
+  .hero { text-align: center; }
+  .hero img { width: 112px; height: 112px; }
+  h1 { margin: 12px 0 8px; font-size: 44px; line-height: 1.15; letter-spacing: -0.02em; }
+  .tagline { margin: 0 auto; max-width: 560px; font-size: 20px; color: var(--muted); }
+  .button {
+    display: inline-block;
+    margin-top: 28px;
+    padding: 12px 22px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: var(--accent-text);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .button:hover { opacity: 0.85; }
+  .meta { margin-top: 12px; font-size: 14px; color: var(--muted); }
+
+  /* 실제 화면을 찍은 이미지 대신 CSS로 그린 예시 창 */
+  .demo {
+    position: relative;
+    margin: 56px auto 0;
+    max-width: 640px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+  }
+  .titlebar { display: flex; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--border); }
+  .window { display: flex; min-height: 230px; }
+  .sidebar { width: 34%; padding: 18px 16px; border-right: 1px solid var(--border); }
+  .content { flex: 1; padding: 18px 20px; }
+  .row { position: relative; height: 12px; margin-bottom: 26px; border-radius: 6px; background: var(--border); }
+  .row.short { width: 60%; }
+  .row.mid { width: 80%; }
+  .pill {
+    position: relative;
+    display: inline-block;
+    width: 84px;
+    height: 30px;
+    margin: 8px 14px 0 0;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .pill.primary { background: var(--border); }
+  .hint {
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    transform: translate(-50%, 1px);
+    padding: 1px 5px;
+    border: 1px solid var(--label-border);
+    border-radius: 4px;
+    background: var(--label);
+    color: var(--label-text);
+    font: 700 12px/1.3 ui-monospace, "SF Mono", Menlo, monospace;
+    z-index: 1;
+  }
+  /* 테두리 색 삼각형 위에 1px 작은 배경색 삼각형을 겹쳐서 화살표에도 테두리를 그린다. */
+  .hint::before,
+  .hint::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 100%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-bottom-color: var(--label-border);
+  }
+  .hint::after {
+    border-width: 4px;
+    border-bottom-color: var(--label);
+  }
+  .caption { margin-top: 14px; text-align: center; font-size: 14px; color: var(--muted); }
+
+  h2 { margin: 72px 0 20px; font-size: 26px; letter-spacing: -0.01em; }
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+  .feature { padding: 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .feature h3 { margin: 0 0 6px; font-size: 18px; }
+  .feature p { margin: 0; font-size: 15px; color: var(--muted); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  td { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  td:first-child { width: 190px; }
+
+  footer { margin-top: 72px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 14px; color: var(--muted); }
+
+  @media (max-width: 520px) {
+    main { padding-top: 48px; }
+    h1 { font-size: 36px; }
+    .tagline { font-size: 18px; }
+    .sidebar { display: none; }
+    td:first-child { width: 150px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <img src="icon.png" alt="Unmouse app icon">
+    <h1>Unmouse</h1>
+    <p class="tagline">Click anything on macOS with the keyboard. Press a shortcut, type a label, done.</p>
+    <a class="button" href="https://github.com/gincheong/Unmouse">View on GitHub</a>
+    <p class="meta">Free and open source · MIT License · macOS 13 or later</p>
+  </section>
+
+  <div class="demo" aria-hidden="true">
+    <div class="titlebar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    <div class="window">
+      <div class="sidebar">
+        <div class="row mid"><span class="hint">S</span></div>
+        <div class="row short"><span class="hint">A</span></div>
+        <div class="row mid"><span class="hint">D</span></div>
+        <div class="row short"><span class="hint">F</span></div>
+      </div>
+      <div class="content">
+        <div class="row mid"><span class="hint">J</span></div>
+        <div class="row"><span class="hint">K</span></div>
+        <div class="row short"><span class="hint">L</span></div>
+        <span class="pill"><span class="hint">SE</span></span>
+        <span class="pill primary"><span class="hint">SW</span></span>
+      </div>
+    </div>
+  </div>
+  <p class="caption">Press <kbd>⌘'</kbd> and every clickable element gets a label. Type the label to click it.</p>
+
+  <h2>Features</h2>
+  <div class="features">
+    <div class="feature">
+      <h3>Click mode</h3>
+      <p>Labels the buttons, links, menus, and menu bar items of the frontmost app.</p>
+    </div>
+    <div class="feature">
+      <h3>Grid mode</h3>
+      <p>Divides the screen into a grid, so you can click any position even in apps that expose no clickable elements.</p>
+    </div>
+    <div class="feature">
+      <h3>Scroll mode</h3>
+      <p>Picks a scroll area and scrolls it with <kbd>J</kbd> <kbd>K</kbd> <kbd>H</kbd> <kbd>L</kbd>.</p>
+    </div>
+    <div class="feature">
+      <h3>Mission Control</h3>
+      <p>Shows labels on window thumbnails and spaces as soon as Mission Control opens.</p>
+    </div>
+    <div class="feature">
+      <h3>Any input source</h3>
+      <p>Labels are matched by key code, so they work while a Korean or other input method is active.</p>
+    </div>
+    <div class="feature">
+      <h3>Your own look</h3>
+      <p>Change the label characters, font, colors, padding, and corner radius, or turn on Liquid Glass.</p>
+    </div>
+  </div>
+
+  <h2>Shortcuts</h2>
+  <table>
+    <tr><td><kbd>⌘'</kbd></td><td>Click mode</td></tr>
+    <tr><td><kbd>⇧⌘'</kbd></td><td>Grid mode</td></tr>
+    <tr><td><kbd>⇧⌘J</kbd></td><td>Scroll mode</td></tr>
+    <tr><td><kbd>⇧</kbd> + last character</td><td>Right-click</td></tr>
+    <tr><td><kbd>⌥</kbd> + last character</td><td>Double-click</td></tr>
+    <tr><td><kbd>⌘</kbd> + last character</td><td>Command-click</td></tr>
+    <tr><td><kbd>⌃</kbd> + last character</td><td>Move the cursor without clicking</td></tr>
+  </table>
+
+  <footer>
+    Source code and instructions are on <a href="https://github.com/gincheong/Unmouse">GitHub</a>.
+  </footer>
+</main>
+</body>
+</html>
