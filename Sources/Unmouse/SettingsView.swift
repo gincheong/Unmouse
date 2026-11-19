@@ -27,6 +27,9 @@ private struct GeneralTab: View {
                 Toggle("메뉴바 항목에도 라벨 표시", isOn: $includeMenuBar)
             } footer: {
                 Text("라벨의 마지막 글자를 ⇧와 함께 누르면 우클릭, ⌥는 더블클릭, ⌘는 커맨드 클릭, ⌃는 클릭 없이 커서만 이동입니다.")
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             Section {
                 Toggle("그리드 모드 사용", isOn: $gridEnabled)
@@ -36,6 +39,9 @@ private struct GeneralTab: View {
                 }
             } footer: {
                 Text("커서가 있는 화면을 격자로 나눕니다. 두 글자로 칸을 고르면 그 칸을 다시 나누고, 한 글자를 더 누르면 그 위치를 클릭합니다. ↩나 Space는 고른 칸의 중앙을 클릭하고, ⌫는 이전 단계로 돌아갑니다. 수식키는 클릭 모드와 같습니다.")
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .formStyle(.grouped)
@@ -64,6 +70,9 @@ private struct ScrollTab: View {
                 Toggle("방향키로도 스크롤", isOn: $arrowKeys)
             } footer: {
                 Text("J/K 아래·위, H/L 왼쪽·오른쪽, D/U 반 페이지, G 맨 위, ⇧G 맨 아래. ⇧와 함께 누르면 3배 속도로 움직입니다. 영역이 여러 개면 커서가 놓인 영역부터 시작하고 숫자 키로 바꿉니다. ESC나 다른 키를 누르면 끝납니다.")
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .formStyle(.grouped)
@@ -81,6 +90,9 @@ private struct MissionControlTab: View {
                 Toggle("Mission Control이 열리면 자동으로 라벨 표시", isOn: $autoActivate).disabled(!enabled)
             } footer: {
                 Text("자동 표시를 끄면 Mission Control이 열린 상태에서 클릭 모드 단축키를 눌러야 라벨이 나타납니다.")
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .formStyle(.grouped)
@@ -184,6 +196,9 @@ private struct LabelTab: View {
                 Toggle("유리에 배경색 입히기", isOn: $glassTint).disabled(!glass)
             } footer: {
                 Text("macOS 26 이상에서 적용됩니다. 미리보기에는 반영되지 않으니 클릭 모드를 켜서 확인하세요. 배경색을 입히지 않으면 글자색은 시스템 색을 따릅니다. 여백을 가로 12, 세로 6 이상으로 넓히고 모서리 둥글기를 8 이상으로 올리면 유리 느낌이 더 잘 보입니다.")
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             Section {
                 Button("기본값으로 되돌리기") {
