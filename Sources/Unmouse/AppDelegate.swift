@@ -104,16 +104,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindow?.title = tr("Unmouse Settings", "Unmouse 설정")
     }
 
-    // Dock 아이콘이 없는 앱이라 메뉴는 보이지 않지만, 설정 창에서 ⌘Q와 ⌘W가 동작하려면 메인 메뉴가 있어야 한다.
+    // Dock 아이콘이 없는 앱이라 메뉴는 보이지 않지만, 설정 창에서 ⌘Q, ⌘W, 편집 단축키가 동작하려면 메인 메뉴가 있어야 한다.
     private func setUpMainMenu() {
         let appMenu = NSMenu()
         appMenu.addItem(
             NSMenuItem(title: "Quit Unmouse", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        let editMenu = NSMenu(title: "Edit")
+        editMenu.addItem(NSMenuItem(title: "Undo", action: Selector(("undo:")), keyEquivalent: "z"))
+        let redo = NSMenuItem(title: "Redo", action: Selector(("redo:")), keyEquivalent: "z")
+        redo.keyEquivalentModifierMask = [.command, .shift]
+        editMenu.addItem(redo)
+        editMenu.addItem(.separator())
+        editMenu.addItem(NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"))
+        editMenu.addItem(NSMenuItem(title: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c"))
+        editMenu.addItem(NSMenuItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"))
+        editMenu.addItem(NSMenuItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"))
         let windowMenu = NSMenu(title: "Window")
         windowMenu.addItem(NSMenuItem(title: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w"))
 
         let mainMenu = NSMenu()
-        for submenu in [appMenu, windowMenu] {
+        for submenu in [appMenu, editMenu, windowMenu] {
             let item = NSMenuItem()
             item.submenu = submenu
             mainMenu.addItem(item)
