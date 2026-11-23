@@ -20,6 +20,7 @@ final class Controller {
     private var typed = ""
     private var swallowedKeys = Set<Int64>()
     private var tap: CFMachPort?
+    private var tapSource: CFRunLoopSource?
     private let overlay = OverlayController()
 
     private static let digitKeys: [Int64: Int] = [18: 0, 19: 1, 20: 2, 21: 3, 23: 4, 22: 5, 26: 6, 28: 7, 25: 8]
@@ -56,9 +57,23 @@ final class Controller {
             userInfo: Unmanaged.passUnretained(self).toOpaque())
         else { return false }
         self.tap = tap
-        CFRunLoopAddSource(CFRunLoopGetMain(), CFMachPortCreateRunLoopSource(nil, tap, 0), .commonModes)
+        let source = CFMachPortCreateRunLoopSource(nil, tap, 0)
+        tapSource = source
+        CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
         CGEvent.tapEnable(tap: tap, enable: true)
         return true
+    }
+
+    // 권한이 없는 상태로 탭이 남아 있으면 키와 클릭이 다른 앱에 전달되지 않는다.
+    func removeTap() {
+        guard let tap else { return }
+        deactivate()
+        CGEvent.tapEnable(tap: tap, enable: false)
+        if let tapSource { CFRunLoopRemoveSource(CFRunLoopGetMain(), tapSource, .commonModes) }
+        CFMachPortInvalidate(tap)
+        tapSource = nil
+        self.tap = nil
+        swallowedKeys.removeAll()
     }
 
     func missionControlOpened() {

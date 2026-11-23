@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let missionControl = MissionControlObserver()
     private var statusItem: NSStatusItem?
     private var permissionTimer: Timer?
+    private var running = false
     private var settingsItem: NSMenuItem?
     private var loginItem: NSMenuItem?
     private var quitItem: NSMenuItem?
@@ -23,17 +24,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self, selector: #selector(appActivated(_:)),
             name: NSWorkspace.didActivateApplicationNotification, object: nil)
 
-        if AXIsProcessTrusted() {
-            start()
-        } else {
+        if !AXIsProcessTrusted() {
             let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
             AXIsProcessTrustedWithOptions(options)
-            permissionTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-                guard AXIsProcessTrusted() else { return }
-                self?.permissionTimer?.invalidate()
-                self?.start()
-            }
         }
+        syncPermission()
+        // 실행 중에 권한이 해제되는 경우도 감지해야 해서 타이머를 계속 유지한다.
+        let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in self?.syncPermission() }
+        RunLoop.main.add(timer, forMode: .common)
+        permissionTimer = timer
+        DistributedNotificationCenter.default().addObserver(
+            self, selector: #selector(accessibilityPermissionChanged),
+            name: Notification.Name("com.apple.accessibility.api"), object: nil)
+    }
+
+    // 알림이 온 직후에는 AXIsProcessTrusted()가 이전 값을 반환할 수 있다.
+    @objc private func accessibilityPermissionChanged() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in self?.syncPermission() }
+    }
+
+    private func syncPermission() {
+        let trusted = AXIsProcessTrusted()
+        guard trusted != running else { return }
+        running = trusted
+        if trusted { start() } else { stop() }
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -51,6 +65,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let app = NSWorkspace.shared.frontmostApplication {
             enableAccessibility(for: app)
         }
+    }
+
+    private func stop() {
+        controller.removeTap()
+        missionControl.stop()
     }
 
     @objc private func appActivated(_ notification: Notification) {
@@ -181,5 +200,10 @@ final class MissionControlObserver {
         }
         timer.resume()
         self.timer = timer
+    }
+
+    func stop() {
+        timer?.cancel()
+        timer = nil
     }
 }
