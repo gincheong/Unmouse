@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import ServiceManagement
 import SwiftUI
 
@@ -8,6 +9,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var permissionTimer: Timer?
     private var running = false
+    private var updateItem: NSMenuItem?
+    private var updateSeparator: NSMenuItem?
+    private var updateObserver: AnyCancellable?
     private var settingsItem: NSMenuItem?
     private var loginItem: NSMenuItem?
     private var quitItem: NSMenuItem?
@@ -16,6 +20,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         setUpStatusItem()
         setUpMainMenu()
+        updateObserver = UpdateChecker.shared.$state.receive(on: DispatchQueue.main).sink { [weak self] _ in
+            self?.applyLanguage()
+        }
+        UpdateChecker.shared.startAutomaticChecks()
         UserDefaults.standard.addObserver(self, forKeyPath: Settings.Keys.language, context: nil)
         NotificationCenter.default.addObserver(
             forName: UserDefaults.didChangeNotification, object: nil, queue: .main
@@ -91,6 +99,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         item.button?.image = NSImage(systemSymbolName: "cursorarrow.click", accessibilityDescription: "Unmouse")
 
         let menu = NSMenu()
+        let update = NSMenuItem(title: "", action: #selector(showUpdate), keyEquivalent: "")
+        update.target = self
+        update.isHidden = true
+        menu.addItem(update)
+        updateItem = update
+        let separator = NSMenuItem.separator()
+        separator.isHidden = true
+        menu.addItem(separator)
+        updateSeparator = separator
         let settings = NSMenuItem(title: "", action: #selector(openSettings), keyEquivalent: ",")
         settings.target = self
         menu.addItem(settings)
@@ -117,6 +134,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func applyLanguage() {
+        let version = UpdateChecker.shared.availableVersion
+        updateItem?.isHidden = version == nil
+        updateSeparator?.isHidden = version == nil
+        if let version {
+            updateItem?.title = tr("Update Available: \(version)…", "업데이트 있음: \(version)…")
+        }
         settingsItem?.title = tr("Settings…", "설정…")
         loginItem?.title = tr("Launch at Login", "로그인 시 실행")
         quitItem?.title = tr("Quit Unmouse", "Unmouse 종료")
@@ -161,6 +184,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow?.makeKeyAndOrderFront(nil)
+    }
+
+    @objc private func showUpdate() {
+        guard let version = UpdateChecker.shared.availableVersion else { return }
+        let alert = NSAlert()
+        alert.messageText = tr("Unmouse \(version) is available", "Unmouse \(version) 버전이 나왔습니다")
+        alert.informativeText = tr(
+            "Run this command in the terminal:\n\n\(UpdateChecker.command)\n\nAfter upgrading, turn Unmouse off and on again in the Accessibility list.",
+            "터미널에서 아래 명령을 실행하세요.\n\n\(UpdateChecker.command)\n\n업그레이드한 뒤 손쉬운 사용 목록에서 Unmouse를 껐다가 다시 켜세요.")
+        alert.addButton(withTitle: tr("Copy Command", "명령 복사"))
+        alert.addButton(withTitle: tr("Changelog", "변경 내역"))
+        alert.addButton(withTitle: tr("Close", "닫기"))
+        NSApp.activate(ignoringOtherApps: true)
+        switch alert.runModal() {
+        case .alertFirstButtonReturn: UpdateChecker.copyCommand()
+        case .alertSecondButtonReturn: NSWorkspace.shared.open(UpdateChecker.changelogURL)
+        default: break
+        }
     }
 
     @objc private func toggleLoginItem() {

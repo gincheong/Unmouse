@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Update check: asks GitHub for the latest release once a day and shows a menu item with the Homebrew upgrade command when a newer version exists. The General tab has a toggle and a manual check.
+
 ## 0.3.0 - 2026-11-23
 
 ### Changed

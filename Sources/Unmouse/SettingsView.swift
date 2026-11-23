@@ -21,6 +21,22 @@ struct SettingsView: View {
 private struct GeneralTab: View {
     @AppStorage(Settings.Keys.includeMenuBar) private var includeMenuBar = true
     @AppStorage(Settings.Keys.language) private var language = "en"
+    @AppStorage(Settings.Keys.checkForUpdates) private var checkForUpdates = true
+    @ObservedObject private var updates = UpdateChecker.shared
+
+    private var updateStatus: String {
+        switch updates.state {
+        case .idle: return tr("Version \(updates.currentVersion)", "버전 \(updates.currentVersion)")
+        case .checking: return tr("Checking…", "확인 중…")
+        case .upToDate:
+            return tr("Version \(updates.currentVersion) is the latest", "버전 \(updates.currentVersion)이 최신입니다")
+        case .available(let version):
+            return tr(
+                "Version \(version) is available (current: \(updates.currentVersion))",
+                "버전 \(version)이 나왔습니다 (현재: \(updates.currentVersion))")
+        case .failed: return tr("Could not check for updates", "업데이트를 확인하지 못했습니다")
+        }
+    }
 
     var body: some View {
         Form {
@@ -38,6 +54,28 @@ private struct GeneralTab: View {
                 Toggle(tr("Show labels on menu bar items", "메뉴바 항목에도 라벨 표시"), isOn: $includeMenuBar)
             } footer: {
                 Text(tr("Press the last label character with ⇧ to right-click, ⌥ to double-click, ⌘ to Command-click, or ⌃ to move the cursor without clicking.", "라벨의 마지막 글자를 ⇧와 함께 누르면 우클릭, ⌥는 더블클릭, ⌘는 커맨드 클릭, ⌃는 클릭 없이 커서만 이동입니다."))
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            Section {
+                Toggle(tr("Check for updates automatically", "자동으로 업데이트 확인"), isOn: $checkForUpdates)
+                LabeledContent(updateStatus) {
+                    Button(tr("Check Now", "지금 확인")) { updates.check() }
+                        .disabled(updates.state == .checking)
+                }
+                if updates.availableVersion != nil {
+                    HStack {
+                        Text(UpdateChecker.command)
+                            .font(.system(size: 11, design: .monospaced))
+                            .textSelection(.enabled)
+                        Spacer()
+                        Button(tr("Copy", "복사")) { UpdateChecker.copyCommand() }
+                        Button(tr("Changelog", "변경 내역")) { NSWorkspace.shared.open(UpdateChecker.changelogURL) }
+                    }
+                }
+            } footer: {
+                Text(tr("Asks GitHub for the latest release once a day. Updates are installed with Homebrew. After upgrading, turn Unmouse off and on again in the Accessibility list.", "하루에 한 번 GitHub에서 최신 릴리즈를 조회합니다. 업데이트는 Homebrew로 설치합니다. 업그레이드한 뒤 손쉬운 사용 목록에서 Unmouse를 껐다가 다시 켜세요."))
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)

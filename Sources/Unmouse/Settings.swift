@@ -60,6 +60,7 @@ enum Settings {
         static let clickHotkeyKeyCode = "clickHotkeyKeyCode"
         static let clickHotkeyModifiers = "clickHotkeyModifiers"
         static let includeMenuBar = "includeMenuBar"
+        static let checkForUpdates = "checkForUpdates"
         static let scrollEnabled = "scrollEnabled"
         static let scrollHotkeyKeyCode = "scrollHotkeyKeyCode"
         static let scrollHotkeyModifiers = "scrollHotkeyModifiers"
@@ -109,6 +110,7 @@ enum Settings {
         Keys.clickHotkeyKeyCode: 39,
         Keys.clickHotkeyModifiers: Int(CGEventFlags.maskCommand.rawValue),
         Keys.includeMenuBar: true,
+        Keys.checkForUpdates: true,
         Keys.scrollEnabled: true,
         Keys.scrollHotkeyKeyCode: 38,
         Keys.scrollHotkeyModifiers: Int(CGEventFlags([.maskCommand, .maskShift]).rawValue),
@@ -204,6 +206,7 @@ enum Settings {
     }
 
     static var language: String { store.string(forKey: Keys.language) ?? "en" }
+    static var checkForUpdates: Bool { store.bool(forKey: Keys.checkForUpdates) }
     static var clickHotkey: Hotkey { hotkey(Keys.clickHotkeyKeyCode, Keys.clickHotkeyModifiers) }
     static var scrollHotkey: Hotkey { hotkey(Keys.scrollHotkeyKeyCode, Keys.scrollHotkeyModifiers) }
     static var gridHotkey: Hotkey { hotkey(Keys.gridHotkeyKeyCode, Keys.gridHotkeyModifiers) }

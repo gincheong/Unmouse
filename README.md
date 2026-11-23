@@ -30,7 +30,17 @@ brew install --cask gincheong/tap/unmouse
 
 On first launch the app asks for Accessibility permission. Turn on Unmouse in System Settings > Privacy & Security > Accessibility.
 
-The released app is ad-hoc signed and not notarized. After `brew upgrade --cask unmouse`, turn Unmouse off and on again in the Accessibility list, because the signature changes with every release.
+The released app is ad-hoc signed and not notarized. After upgrading, turn Unmouse off and on again in the Accessibility list, because the signature changes with every release.
+
+### Updating
+
+```sh
+brew update && brew upgrade --cask unmouse
+```
+
+`brew upgrade` alone can skip refreshing the tap and report that Unmouse is already up to date.
+
+Unmouse asks GitHub for the latest release once a day and shows an item in its menu when a newer version exists. Turn this off in the General tab of the settings window, where you can also check manually.
 
 ## Build and run
 
