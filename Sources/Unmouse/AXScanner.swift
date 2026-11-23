@@ -18,6 +18,10 @@ final class AXScanner {
     ]
     // 역할만으로는 클릭 가능 여부를 알 수 없어서 AXPress 액션이 있는지 따로 확인하는 역할
     private static let pressCheckedRoles: Set<String> = ["AXGroup", "AXStaticText", "AXImage", "AXCell"]
+    // 클릭 핸들러를 상위 요소에 위임한 웹 요소는 AXPress가 없어서 클래스 이름으로 판단한다.
+    private static let clickableClasses: Set<String> = [
+        "is-clickable", "tappable", "clickable", "mod-clickable", "cm-underline",
+    ]
     private static let leafRoles: Set<String> = [
         "AXButton", "AXLink", "AXCheckBox", "AXRadioButton", "AXPopUpButton", "AXMenuButton",
         "AXTextField", "AXTextArea", "AXComboBox", "AXSlider", "AXStaticText", "AXImage",
@@ -30,6 +34,7 @@ final class AXScanner {
     ]
     private static let attributes = [
         "AXRole", "AXPosition", "AXSize", "AXChildren", "AXVisibleRows", "AXEnabled", "AXSelected",
+        "AXDOMClassList",
     ] as CFArray
 
     private let mode: Mode
@@ -157,7 +162,7 @@ final class AXScanner {
         var rawValues: CFArray?
         let error = AXUIElementCopyMultipleAttributeValues(
             element, Self.attributes, AXCopyMultipleAttributeOptions(rawValue: 0), &rawValues)
-        guard error == .success, let values = rawValues as? [AnyObject], values.count == 7 else { return }
+        guard error == .success, let values = rawValues as? [AnyObject], values.count == 8 else { return }
 
         let role = values[0] as? String ?? ""
         var children = values[3] as? [AXUIElement] ?? []
@@ -193,25 +198,45 @@ final class AXScanner {
         }
 
         var clickable = false
+        var wrapperIndex: Int?
         if !visible.isNull, enabled {
             if Self.clickableRoles.contains(role) {
                 clickable = true
             } else if role == "AXRow" {
                 clickable = !insideTarget
-            } else if !insideTarget, !inWeb, Self.pressCheckedRoles.contains(role) {
-                clickable = hasPressAction(element)
+            } else if !insideTarget, Self.pressCheckedRoles.contains(role) {
+                if !inWeb {
+                    clickable = hasPressAction(element)
+                } else if role != "AXStaticText" {
+                    // WebKit은 클릭 가능한 요소 안의 텍스트에도 AXPress를 보고해서 텍스트는 검사하지 않는다.
+                    clickable = isWebClickable(element, classes: values[7] as? [String] ?? [], frame: full)
+                    if clickable { wrapperIndex = targets.count }
+                }
             }
         }
         if clickable { targets.append(Target(frame: visible)) }
 
-        if Self.leafRoles.contains(role) { return }
+        // CodeMirror 같은 웹 편집기는 본문 전체가 AXTextArea 하나이고 링크가 그 안에 들어 있다.
+        let webEditor = inWeb && role == "AXTextArea"
+        if Self.leafRoles.contains(role), !webEditor { return }
         // 닫힌 메뉴의 항목도 트리에는 들어 있어서, 열려 있는 메뉴만 내려간다.
         if role == "AXMenuBarItem" && !selected { return }
 
         let childInWeb = inWeb || role == "AXWebArea"
         for child in children {
-            visit(child, clip: clip, insideTarget: insideTarget || clickable, inWeb: childInWeb, depth: depth + 1)
+            visit(
+                child, clip: clip, insideTarget: insideTarget || (clickable && !webEditor), inWeb: childInWeb,
+                depth: depth + 1)
         }
+        // label 안의 체크박스처럼 안쪽에 실제 컨트롤이 있으면 감싸는 요소는 같은 동작의 중복 대상이다.
+        if let wrapperIndex, targets.count > wrapperIndex + 1 { targets.remove(at: wrapperIndex) }
+    }
+
+    private func isWebClickable(_ element: AXUIElement, classes: [String], frame: CGRect) -> Bool {
+        if !Self.clickableClasses.isDisjoint(with: classes) { return true }
+        // 스크롤 컨테이너처럼 내용을 감싸는 큰 요소도 AXPress를 보고한다.
+        guard frame.width < 200 || frame.height < 200 else { return false }
+        return hasPressAction(element)
     }
 
     // 내용이 다 보이는 텍스트 입력란은 스크롤할 것이 없어서 대상에서 뺀다. 메신저의 한두 줄짜리 입력란이 여기에 해당한다.
