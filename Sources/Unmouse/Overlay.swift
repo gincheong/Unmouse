@@ -62,6 +62,13 @@ struct LabelLayout: Identifiable {
     let pointer: [CGPoint]?
     // 유리 라벨은 삼각형 대신 끝이 둥근 돌기로 대상을 가리킨다.
     var smoothPointer = false
+    // 상자 아래쪽에서 키캡의 옆면으로 칠하는 높이
+    var lip: CGFloat = 0
+
+    var face: CGRect {
+        guard lip > 0 else { return box }
+        return CGRect(x: box.minX + 1, y: box.minY + 1, width: box.width - 2, height: box.height - lip - 1)
+    }
 
     // 상자와 삼각형을 합친 외곽선. origin을 주면 그 점을 원점으로 옮긴 좌표로 만든다.
     func outline(relativeTo origin: CGPoint = .zero) -> Path {
@@ -148,11 +155,30 @@ final class LabelsView: NSView {
         guard glassHost == nil, let context = NSGraphicsContext.current?.cgContext else { return }
 
         let font = style.font
-        for layout in layouts(style: style) {
+        let side = style.background.blended(withFraction: 0.35, of: .black) ?? style.background
+        for layout in layouts(style: style, lip: max(2, round(style.fontSize * 0.2))) {
             let outline = layout.outline().cgPath
+            let face = layout.face
+            let faceRadius = min(max(layout.radius - 1, 0), face.width / 2, face.height / 2)
+            let facePath = CGPath(roundedRect: face, cornerWidth: faceRadius, cornerHeight: faceRadius, transform: nil)
+
+            // 옆면과 윗면이 겹치는 부분의 색이 달라지지 않게 불투명도는 한 번에 적용한다.
+            context.saveGState()
+            context.setAlpha(style.backgroundOpacity)
+            context.beginTransparencyLayer(auxiliaryInfo: nil)
             context.addPath(outline)
-            context.setFillColor(style.background.withAlphaComponent(style.backgroundOpacity).cgColor)
+            context.setFillColor(side.cgColor)
             context.fillPath()
+            context.addPath(facePath)
+            context.setFillColor(style.background.cgColor)
+            context.fillPath()
+            context.addPath(facePath)
+            context.setStrokeColor(CGColor(gray: 1, alpha: 0.55))
+            context.setLineWidth(0.75)
+            context.strokePath()
+            context.endTransparencyLayer()
+            context.restoreGState()
+
             context.addPath(outline)
             context.setStrokeColor(style.text.withAlphaComponent(0.45).cgColor)
             context.setLineWidth(1)
@@ -164,7 +190,7 @@ final class LabelsView: NSView {
                 .foregroundColor, value: style.text.withAlphaComponent(0.3),
                 range: NSRange(location: 0, length: layout.typedCount))
             let size = text.size()
-            text.draw(at: CGPoint(x: layout.box.midX - size.width / 2, y: layout.box.midY - size.height / 2))
+            text.draw(at: CGPoint(x: face.midX - size.width / 2, y: face.midY - size.height / 2))
         }
     }
 
@@ -206,7 +232,7 @@ final class LabelsView: NSView {
         }
     }
 
-    private func layouts(style: LabelStyle) -> [LabelLayout] {
+    private func layouts(style: LabelStyle, lip: CGFloat = 0) -> [LabelLayout] {
         let font = style.font
         let pointed = showsPointers && style.pointer
         let arrowHeight = max(4, round(style.fontSize * 0.4))
@@ -215,9 +241,10 @@ final class LabelsView: NSView {
         return items.filter { $0.label.hasPrefix(typed) }.enumerated().map { index, item in
             let text = style.uppercase ? item.label.uppercased() : item.label
             let textSize = (text as NSString).size(withAttributes: [.font: font])
-            let height = ceil(textSize.height) + padding.height
+            let faceHeight = ceil(textSize.height) + padding.height
+            let height = faceHeight + lip
             // 한 글자 라벨도 삼각형이 붙을 평평한 구간이 남도록 너비를 높이 이상으로 잡는다.
-            let width = max(ceil(textSize.width) + padding.width, height)
+            let width = max(ceil(textSize.width) + padding.width, faceHeight)
             let radius = min(style.cornerRadius, min(width, height) / 2)
             let frame = item.target.frame.offsetBy(dx: -screenAXRect.minX, dy: -screenAXRect.minY)
             let maxX = bounds.width - width
@@ -228,7 +255,7 @@ final class LabelsView: NSView {
                     y: min(max(round(frame.midY - height / 2), 0), bounds.height - height),
                     width: width, height: height)
                 return LabelLayout(
-                    id: index, text: text, typedCount: typed.count, box: box, radius: radius, pointer: nil)
+                    id: index, text: text, typedCount: typed.count, box: box, radius: radius, pointer: nil, lip: lip)
             }
 
             // 작은 요소는 아래쪽 가장자리를, 큰 요소는 중앙 근처를 가리켜서 라벨이 대상을 덜 가린다.
@@ -261,7 +288,7 @@ final class LabelsView: NSView {
                 CGPoint(x: arrowX + halfWidth, y: baseY),
             ]
             return LabelLayout(
-                id: index, text: text, typedCount: typed.count, box: box, radius: radius, pointer: pointer)
+                id: index, text: text, typedCount: typed.count, box: box, radius: radius, pointer: pointer, lip: lip)
         }
     }
 }

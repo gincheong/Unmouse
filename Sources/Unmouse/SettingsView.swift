@@ -197,16 +197,22 @@ private struct LabelTab: View {
     @AppStorage(Settings.Keys.labelGlassTint) private var glassTint = true
     @AppStorage(Settings.Keys.labelPointer) private var pointer = true
 
+    private var sideColor: Color {
+        let base = NSColor(hex: background) ?? .black
+        return Color(nsColor: base.blended(withFraction: 0.35, of: .black) ?? base)
+    }
+
     var body: some View {
         Form {
             Section {
                 LabeledContent(tr("Preview", "미리보기")) {
                     HStack(spacing: 8) {
                         ForEach(["s", "sa", "dk"], id: \.self) { sample in
+                            let lip = max(2, (fontSize * 0.2).rounded())
                             VStack(spacing: -1) {
                                 if pointer {
                                     PointerShape()
-                                        .fill(color(background).opacity(backgroundOpacity))
+                                        .fill(sideColor.opacity(backgroundOpacity))
                                         .frame(width: max(4, fontSize * 0.4) * 1.6, height: max(4, fontSize * 0.4))
                                 }
                                 Text(uppercase ? sample.uppercased() : sample)
@@ -214,9 +220,20 @@ private struct LabelTab: View {
                                     .foregroundColor(color(text))
                                     .padding(.horizontal, paddingWidth / 2)
                                     .padding(.vertical, paddingHeight / 2)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: cornerRadius)
-                                            .fill(color(background).opacity(backgroundOpacity)))
+                                    .padding(.bottom, lip)
+                                    .background {
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: cornerRadius).fill(sideColor)
+                                            RoundedRectangle(cornerRadius: max(cornerRadius - 1, 0))
+                                                .fill(color(background))
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: max(cornerRadius - 1, 0))
+                                                        .stroke(Color.white.opacity(0.55), lineWidth: 0.75))
+                                                .padding(EdgeInsets(top: 1, leading: 1, bottom: lip, trailing: 1))
+                                        }
+                                        .compositingGroup()
+                                        .opacity(backgroundOpacity)
+                                    }
                                     .overlay(
                                         RoundedRectangle(cornerRadius: cornerRadius)
                                             .stroke(color(text).opacity(0.45), lineWidth: 1))
