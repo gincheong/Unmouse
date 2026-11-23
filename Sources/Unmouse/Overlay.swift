@@ -60,18 +60,38 @@ struct LabelLayout: Identifiable {
     let radius: CGFloat
     // 대상을 가리키는 삼각형의 세 꼭짓점. 첫 번째가 대상 쪽 끝이다.
     let pointer: [CGPoint]?
+    // 유리 라벨은 삼각형 대신 끝이 둥근 돌기로 대상을 가리킨다.
+    var smoothPointer = false
 
     // 상자와 삼각형을 합친 외곽선. origin을 주면 그 점을 원점으로 옮긴 좌표로 만든다.
     func outline(relativeTo origin: CGPoint = .zero) -> Path {
         let shift = CGAffineTransform(translationX: -origin.x, y: -origin.y)
         var path = CGPath(roundedRect: box, cornerWidth: radius, cornerHeight: radius, transform: nil)
         if let pointer {
-            let triangle = CGMutablePath()
-            triangle.move(to: pointer[0])
-            triangle.addLine(to: pointer[1])
-            triangle.addLine(to: pointer[2])
-            triangle.closeSubpath()
-            path = path.union(triangle)
+            let tip = pointer[0]
+            let arrow = CGMutablePath()
+            if smoothPointer {
+                let baseY = pointer[1].y
+                let edgeY = tip.y < box.midY ? box.minY + 1 : box.maxY - 1
+                // 돌기가 둥근 모서리 밖으로 나가지 않게 폭을 제한한다.
+                let room = min(tip.x - box.minX, box.maxX - tip.x) - radius * 0.5
+                let half = max(min(abs(edgeY - tip.y) * 1.9, box.width * 0.3, room), 2)
+                arrow.move(to: CGPoint(x: tip.x - half, y: baseY))
+                arrow.addLine(to: CGPoint(x: tip.x - half, y: edgeY))
+                arrow.addCurve(
+                    to: tip, control1: CGPoint(x: tip.x - half * 0.35, y: edgeY),
+                    control2: CGPoint(x: tip.x - half * 0.5, y: tip.y))
+                arrow.addCurve(
+                    to: CGPoint(x: tip.x + half, y: edgeY), control1: CGPoint(x: tip.x + half * 0.5, y: tip.y),
+                    control2: CGPoint(x: tip.x + half * 0.35, y: edgeY))
+                arrow.addLine(to: CGPoint(x: tip.x + half, y: baseY))
+            } else {
+                arrow.move(to: tip)
+                arrow.addLine(to: pointer[1])
+                arrow.addLine(to: pointer[2])
+            }
+            arrow.closeSubpath()
+            path = path.union(arrow)
         }
         return Path(path).applying(shift)
     }
@@ -98,7 +118,12 @@ final class LabelsView: NSView {
         glassHost = nil
         let style = Settings.labelStyle
         if style.glass, !showsCells, #available(macOS 26.0, *) {
-            let host = NSHostingView(rootView: GlassLabels(layouts: layouts(style: style), style: style))
+            let smoothed = layouts(style: style).map { layout in
+                var layout = layout
+                layout.smoothPointer = true
+                return layout
+            }
+            let host = NSHostingView(rootView: GlassLabels(layouts: smoothed, style: style))
             host.frame = bounds
             addSubview(host)
             glassHost = host
@@ -258,79 +283,13 @@ private struct GlassLabels: View {
                         .offset(x: layout.box.minX - bounds.minX, y: layout.box.minY - bounds.minY)
                         .frame(width: bounds.width, height: bounds.height, alignment: .topLeading)
                         .background {
-                            shape.fill(wash)
-                            shape.fill(depth)
-                            shape.fill(sheen)
-                            glint(layout, in: bounds).clipShape(shape)
+                            if style.glassTint { shape.fill(Color(nsColor: style.background).opacity(0.5)) }
                         }
-                        .overlay {
-                            // 밝은 화면에서도 윤곽이 보이게 흰 테두리 바깥에 어두운 선을 겹친다.
-                            shape.stroke(Color.black.opacity(0.3), lineWidth: 0.75)
-                            // 색은 둘레 전체에 가늘게 두르고 아래쪽과 한쪽 옆만 조금 더 두껍게, 흰 반사는 위쪽에 둔다.
-                            let side = variation(layout, 4) < 0.5 ? -0.3 : 0.3
-                            shape.stroke(iridescence(layout), lineWidth: 0.4)
-                            EdgeShape(layout: layout, shift: CGSize(width: side, height: -0.5))
-                                .fill(iridescence(layout))
-                            EdgeShape(layout: layout, shift: CGSize(width: -side, height: 0.6))
-                                .fill(Color.white.opacity(0.9))
-                            shape.stroke(rim, lineWidth: 0.5)
-                        }
-                        .glassEffect(.clear, in: shape)
-                        .shadow(color: .black.opacity(0.45), radius: 3, y: 1.5)
+                        .glassEffect(.regular, in: shape)
                         .offset(x: bounds.minX, y: bounds.minY)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        }
-    }
-
-    // 시스템 유리는 라벨 크기에서 광택 없이 평평하게 그려져서, 투명 유리 위에 색과 광택을 직접 얹는다.
-    private var wash: Color {
-        style.glassTint
-            ? Color(nsColor: style.background).opacity(0.5) : Color(nsColor: .windowBackgroundColor).opacity(0.6)
-    }
-
-    private var sheen: LinearGradient {
-        LinearGradient(colors: [.white.opacity(0.7), .white.opacity(0)], startPoint: .top, endPoint: .center)
-    }
-
-    // 아래쪽을 어둡게 해서 유리의 두께처럼 보이게 한다.
-    private var depth: LinearGradient {
-        LinearGradient(colors: [.black.opacity(0), .black.opacity(0.22)], startPoint: .center, endPoint: .bottom)
-    }
-
-    private var rim: LinearGradient {
-        LinearGradient(colors: [.white.opacity(0.95), .white.opacity(0.15)], startPoint: .top, endPoint: .bottom)
-    }
-
-    // 흰 테두리가 옅어지는 아래쪽 가장자리에 빛이 갈라진 색이 보인다.
-    private func iridescence(_ layout: LabelLayout) -> AngularGradient {
-        let colors: [Color] = [.cyan, .purple, .pink, .orange, .yellow, .mint, .cyan]
-        return AngularGradient(
-            colors: colors.map { $0.opacity(0.85) }, center: .center, angle: .degrees(variation(layout, 1) * 360))
-    }
-
-    // 라벨마다 광택이 다르게 보이도록 0과 1 사이 값을 만든다. 다시 그려도 바뀌지 않게 라벨 글자에서 계산한다.
-    private func variation(_ layout: LabelLayout, _ salt: UInt64) -> Double {
-        var hash = salt &* 0x9E37_79B9_7F4A_7C15
-        for scalar in layout.text.unicodeScalars {
-            hash = (hash ^ UInt64(scalar.value)) &* 0x100_0000_01B3
-        }
-        hash ^= hash >> 29
-        return Double(hash % 1000) / 1000
-    }
-
-    // 상자 위쪽에 맺히는 반사광
-    private func glint(_ layout: LabelLayout, in bounds: CGRect) -> some View {
-        let box = layout.box
-        return Color.clear.overlay(alignment: .topLeading) {
-            Capsule()
-                .fill(Color.white.opacity(0.9))
-                .frame(width: box.width * (0.25 + 0.2 * variation(layout, 2)), height: max(1.5, box.height * 0.12))
-                .blur(radius: 0.6)
-                .offset(
-                    x: box.minX - bounds.minX + box.width * (0.12 + 0.35 * variation(layout, 3)),
-                    y: box.minY - bounds.minY + box.height * 0.13)
         }
     }
 
@@ -343,19 +302,6 @@ private struct GlassLabels: View {
         let rest = String(layout.text.dropFirst(layout.typedCount))
         return (Text(typed).foregroundColor(textColor.opacity(0.35)) + Text(rest).foregroundColor(textColor))
             .font(Font(style.font as CTFont))
-    }
-}
-
-// 외곽선에서 shift만큼 옮긴 같은 모양을 뺀 영역. 옮긴 방향의 반대쪽 가장자리만 초승달 모양으로 남는다.
-private struct EdgeShape: Shape {
-    let layout: LabelLayout
-    let shift: CGSize
-
-    func path(in rect: CGRect) -> Path {
-        let outline = layout.outline(relativeTo: layout.bounds.origin).cgPath
-        var move = CGAffineTransform(translationX: shift.width, y: shift.height)
-        guard let moved = outline.copy(using: &move) else { return Path() }
-        return Path(outline.subtracting(moved))
     }
 }
 
