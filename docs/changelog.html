@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unmouse changelog</title>
+<meta name="description" content="Changes in each release of Unmouse.">
+<link rel="icon" href="icon.png">
+<style>
+  :root {
+    --bg: #fbfaf7;
+    --surface: #ffffff;
+    --border: #e4e1da;
+    --text: #1c1b19;
+    --muted: #6b6860;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141414;
+      --surface: #1e1e1e;
+      --border: #333230;
+      --text: #f2f0eb;
+      --muted: #a09d95;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 48px 20px; }
+  a { color: inherit; }
+  code {
+    font: 0.9em ui-monospace, "SF Mono", Menlo, monospace;
+    padding: 1px 5px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--surface);
+  }
+
+  .home { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; text-decoration: none; }
+  .home img { width: 28px; height: 28px; }
+  h1 { margin: 28px 0 8px; font-size: 36px; line-height: 1.15; letter-spacing: -0.02em; }
+
+  .release { margin-top: 28px; padding: 20px 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .release h2 { margin: 0; font-size: 22px; }
+  .release time { font-size: 14px; color: var(--muted); }
+  .release h3 { margin: 16px 0 4px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  .release ul { margin: 0; padding-left: 20px; font-size: 16px; }
+  .release li { margin: 4px 0; }
+
+  footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 14px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <a class="home" href="./"><img src="icon.png" alt="">Unmouse</a>
+  <h1>Changelog</h1>
+
+  <section class="release">
+    <h2>0.3.0</h2>
+    <time datetime="2026-11-23">November 23, 2026</time>
+    <h3>Changed</h3>
+    <ul>
+      <li>Liquid Glass labels use the system regular glass. The hand-drawn gloss, glint, and iridescent rim are removed.</li>
+      <li>Liquid Glass labels point at the target with a rounded bump in place of the triangle.</li>
+      <li>Plain labels are drawn as keycaps: a face in the background color over a darker side. The label height grows by the side height.</li>
+      <li>The settings preview shows the keycap design.</li>
+    </ul>
+  </section>
+
+  <section class="release">
+    <h2>0.2.0</h2>
+    <time datetime="2026-11-23">November 23, 2026</time>
+    <h3>Added</h3>
+    <ul>
+      <li>Click mode detects clickable web elements by their class and by the press action.</li>
+      <li>Universal build for Apple silicon and Intel, and a Homebrew cask release script.</li>
+    </ul>
+  </section>
+
+  <section class="release">
+    <h2>0.1.0</h2>
+    <time datetime="2026-11-19">November 19, 2026</time>
+    <h3>Added</h3>
+    <ul>
+      <li>Click mode, with labels on the windows, menus, and menu bar items of the frontmost app.</li>
+      <li>Scroll mode.</li>
+      <li>Grid mode, with finer division and a grid that follows the focused window.</li>
+      <li>Mission Control labels on window thumbnails and spaces.</li>
+      <li>Hover with Control.</li>
+      <li>Label design settings: characters, font, weight, size, padding, colors, opacity, corner radius, and Liquid Glass.</li>
+      <li>Grid design settings.</li>
+      <li>English and Korean localization.</li>
+      <li>Settings synced to <code>~/.config/unmouse/config.json</code>.</li>
+    </ul>
+  </section>
+
+  <footer>
+    Releases and downloads are on <a href="https://github.com/gincheong/Unmouse/releases">GitHub</a>.
+  </footer>
+</main>
+</body>
+</html>

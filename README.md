@@ -54,7 +54,7 @@ UNMOUSE_SIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 
 The cask lives in [gincheong/homebrew-tap](https://github.com/gincheong/homebrew-tap). Clone it next to this repository, or set `UNMOUSE_TAP_DIR` to its path.
 
-Bump `CFBundleShortVersionString` in `Info.plist`, then run `./release.sh`. It builds a universal app, writes `build/Unmouse.zip`, updates the version and checksum in the tap's `Casks/unmouse.rb`, and prints the commands for tagging, uploading the release, and pushing the tap.
+Bump `CFBundleShortVersionString` in `Info.plist`, add the release to `CHANGELOG.md` and `docs/changelog.html`, then run `./release.sh`. It builds a universal app, writes `build/Unmouse.zip`, updates the version and checksum in the tap's `Casks/unmouse.rb`, and prints the commands for tagging, uploading the release, and pushing the tap.
 
 ## Usage
 
@@ -124,6 +124,10 @@ $BIN --preview --grid              # show sample grid cells for 3 seconds
 ```
 
 These run from the terminal, so the terminal app needs Accessibility permission.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) or the [changelog page](https://gincheong.github.io/Unmouse/changelog.html).
 
 ## License
 
