@@ -1,10 +1,14 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 - 2026-11-23
 
 ### Added
 
 - Update check: asks GitHub for the latest release once a day and shows a menu item with the Homebrew upgrade command when a newer version exists. The General tab has a toggle and a manual check.
+
+### Fixed
+
+- Unmouse stops handling keys when its Accessibility permission is turned off while it is running, and resumes when the permission is turned on again.
 
 ## 0.3.0 - 2026-11-23
 
