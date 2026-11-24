@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1 - 2026-11-24
+
+### Fixed
+
+- Click mode shows labels on web elements whose parent reports a height or width under 3px. Form inputs in some web layouts were skipped.
+
 ## 0.4.0 - 2026-11-23
 
 ### Added
