@@ -179,8 +179,13 @@ final class AXScanner {
         if let origin = point(values[1]), let size = size(values[2]), size.width > 0, size.height > 0 {
             full = CGRect(origin: origin, size: size)
             visible = full.intersection(clip)
-            if visible.isNull || visible.width < 3 || visible.height < 3 { return }
-            if role == "AXScrollArea" || role == "AXWindow" { clip = visible }
+            if visible.isNull { return }
+            // 자식이 박스 밖으로 넘치는 웹 요소는 높이가 1px로 보고되기도 해서 하위는 계속 방문한다.
+            if visible.width < 3 || visible.height < 3 {
+                visible = .null
+            } else if role == "AXScrollArea" || role == "AXWindow" {
+                clip = visible
+            }
         }
 
         if mode == .scroll {
