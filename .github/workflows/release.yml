@@ -1,0 +1,46 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    # Liquid Glass API 때문에 macOS 26 SDK가 필요하다.
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check that the tag matches Info.plist
+        run: |
+          VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Info.plist)"
+          if [[ "v$VERSION" != "$GITHUB_REF_NAME" ]]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match the Info.plist version $VERSION"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          repository: gincheong/homebrew-tap
+          token: ${{ secrets.TAP_TOKEN }}
+          path: homebrew-tap
+
+      - name: Build and update the cask
+        run: UNMOUSE_TAP_DIR=homebrew-tap ./release.sh
+
+      # cask의 sha256은 이 zip에만 맞아서 같은 작업에서 만든 zip을 그대로 올린다.
+      - name: Create the release
+        run: gh release create "$GITHUB_REF_NAME" build/Unmouse.zip --title "$GITHUB_REF_NAME" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Push the cask
+        working-directory: homebrew-tap
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "unmouse ${GITHUB_REF_NAME#v}"
+          git push

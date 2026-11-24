@@ -19,15 +19,10 @@ sed -i '' -E \
   -e "s/^  sha256 \".*\"/  sha256 \"$SHA\"/" \
   "$CASK"
 
-# cask의 sha256은 이 zip에만 맞는다. 다시 빌드하면 값이 달라지므로 아래 순서대로 같은 zip을 올린다.
+# cask의 sha256은 이 zip에만 맞는다. 다시 빌드하면 값이 달라지므로 릴리즈에는 이 zip을 올린다.
 cat <<EOF
 
 version: $VERSION
 sha256:  $SHA
 zip:     $PWD/$ZIP
-
-next:
-  git tag v$VERSION && git push origin main v$VERSION
-  gh release create v$VERSION $ZIP --title v$VERSION --generate-notes
-  git -C $TAP commit -am "unmouse $VERSION" && git -C $TAP push
 EOF

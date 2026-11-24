@@ -62,9 +62,18 @@ UNMOUSE_SIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 
 ### Releasing
 
-The cask lives in [gincheong/homebrew-tap](https://github.com/gincheong/homebrew-tap). Clone it next to this repository, or set `UNMOUSE_TAP_DIR` to its path.
+Bump `CFBundleShortVersionString` in `Info.plist`, add the release to `CHANGELOG.md` and `docs/changelog.html`, and push the commit. Then push a tag with the same version.
 
-Bump `CFBundleShortVersionString` in `Info.plist`, add the release to `CHANGELOG.md` and `docs/changelog.html`, then run `./release.sh`. It builds a universal app, writes `build/Unmouse.zip`, updates the version and checksum in the tap's `Casks/unmouse.rb`, and prints the commands for tagging, uploading the release, and pushing the tap.
+```sh
+git tag v0.5.0
+git push origin v0.5.0
+```
+
+The `release` workflow builds a universal app, uploads `Unmouse.zip` to a new GitHub release, and pushes the new version and checksum to `Casks/unmouse.rb` in [gincheong/homebrew-tap](https://github.com/gincheong/homebrew-tap). It fails when the tag does not match the version in `Info.plist`.
+
+The workflow pushes to the tap with the `TAP_TOKEN` repository secret, a personal access token with write access to the contents of `gincheong/homebrew-tap`.
+
+`./release.sh` runs the build step on its own. It writes `build/Unmouse.zip` and updates the cask in a local clone of the tap, which it looks for next to this repository or at `UNMOUSE_TAP_DIR`.
 
 ## Usage
 
