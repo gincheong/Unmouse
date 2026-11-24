@@ -75,7 +75,7 @@ private struct GeneralTab: View {
                     }
                 }
             } footer: {
-                Text(tr("Asks GitHub for the latest release once a day. Updates are installed with Homebrew. After upgrading, turn Unmouse off and on again in the Accessibility list.", "하루에 한 번 GitHub에서 최신 릴리즈를 조회합니다. 업데이트는 Homebrew로 설치합니다. 업그레이드한 뒤 손쉬운 사용 목록에서 Unmouse를 껐다가 다시 켜세요."))
+                Text(tr("Asks GitHub for the latest release once a day. Updates are installed with Homebrew. After upgrading, remove Unmouse from the Accessibility list and add it again.", "하루에 한 번 GitHub에서 최신 릴리즈를 조회합니다. 업데이트는 Homebrew로 설치합니다. 업그레이드한 뒤 손쉬운 사용 목록에서 Unmouse를 제거하고 다시 추가하세요."))
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)

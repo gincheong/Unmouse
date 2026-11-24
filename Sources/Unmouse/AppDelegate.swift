@@ -191,8 +191,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let alert = NSAlert()
         alert.messageText = tr("Unmouse \(version) is available", "Unmouse \(version) 버전이 나왔습니다")
         alert.informativeText = tr(
-            "Run this command in the terminal:\n\n\(UpdateChecker.command)\n\nAfter upgrading, turn Unmouse off and on again in the Accessibility list.",
-            "터미널에서 아래 명령을 실행하세요.\n\n\(UpdateChecker.command)\n\n업그레이드한 뒤 손쉬운 사용 목록에서 Unmouse를 껐다가 다시 켜세요.")
+            "Run this command in the terminal:\n\n\(UpdateChecker.command)\n\nAfter upgrading, remove Unmouse from the Accessibility list and add it again.",
+            "터미널에서 아래 명령을 실행하세요.\n\n\(UpdateChecker.command)\n\n업그레이드한 뒤 손쉬운 사용 목록에서 Unmouse를 제거하고 다시 추가하세요.")
         alert.addButton(withTitle: tr("Copy Command", "명령 복사"))
         alert.addButton(withTitle: tr("Changelog", "변경 내역"))
         alert.addButton(withTitle: tr("Close", "닫기"))

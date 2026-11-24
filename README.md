@@ -30,7 +30,7 @@ brew install --cask gincheong/tap/unmouse
 
 On first launch the app asks for Accessibility permission. Turn on Unmouse in System Settings > Privacy & Security > Accessibility.
 
-The released app is ad-hoc signed and not notarized. After upgrading, turn Unmouse off and on again in the Accessibility list, because the signature changes with every release.
+The released app is ad-hoc signed and not notarized. After upgrading, remove Unmouse from the Accessibility list and add it again, because the signature changes with every release. Turning it off and on is not enough.
 
 ### Updating
 
