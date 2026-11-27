@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0 - 2026-11-27
+
+### Added
+
+- The mouse cursor is hidden while click, scroll, or grid mode is active, and is shown again when the mouse moves or the mode ends. It uses a private macOS API, so the cursor stays visible on macOS versions that do not provide it.
+
 ## 0.4.2 - 2026-11-27
 
 ### Fixed
