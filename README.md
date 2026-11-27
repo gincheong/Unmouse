@@ -62,7 +62,7 @@ UNMOUSE_SIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 
 ### Releasing
 
-Bump `CFBundleShortVersionString` in `Info.plist`, add the release to `CHANGELOG.md` and `docs/changelog.html`, update the version shown in `docs/index.html`, and push the commit. Then push a tag with the same version.
+Bump `CFBundleShortVersionString` in `Info.plist`, add the release to `CHANGELOG.md` and `docs/changelog.html`, and push the commit. Then push a tag with the same version.
 
 ```sh
 git tag v0.5.0

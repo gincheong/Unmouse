@@ -159,7 +159,7 @@
     <p class="tagline">Click anything on macOS with the keyboard. Press a shortcut, type a label, done.</p>
     <a class="button" href="https://github.com/gincheong/Unmouse">View on GitHub</a>
     <p class="platform"><a href="https://github.com/gincheong/unmouse-windows">Unmouse for Windows</a></p>
-    <p class="meta">v0.5.0 (<a href="changelog.html">changelog</a>) · Free and open source · MIT License · macOS 13 or later · English and Korean</p>
+    <p class="meta"><span id="release"><a href="changelog.html">Changelog</a></span> · Free and open source · MIT License · macOS 13 or later · English and Korean</p>
   </section>
 
   <div class="demo" aria-hidden="true">
@@ -225,5 +225,18 @@
     Source code and instructions are on <a href="https://github.com/gincheong/Unmouse">GitHub</a>. See the <a href="changelog.html">changelog</a> for what changed in each release. The Windows port is at <a href="https://github.com/gincheong/unmouse-windows">gincheong/unmouse-windows</a>.
   </footer>
 </main>
+<script>
+  // 요청이 실패하면 버전 없이 Changelog 링크만 남는다.
+  fetch('https://api.github.com/repos/gincheong/Unmouse/releases/latest')
+    .then((res) => (res.ok ? res.json() : Promise.reject()))
+    .then(({ tag_name: tag }) => {
+      if (!/^v\d+(\.\d+)*$/.test(tag)) return;
+      const release = document.getElementById('release');
+      release.querySelector('a').textContent = 'changelog';
+      release.prepend(tag + ' (');
+      release.append(')');
+    })
+    .catch(() => {});
+</script>
 </body>
 </html>
