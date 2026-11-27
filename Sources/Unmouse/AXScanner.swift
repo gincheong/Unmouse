@@ -209,6 +209,11 @@ final class AXScanner {
                 clickable = true
             } else if role == "AXRow" {
                 clickable = !insideTarget
+            } else if !inWeb, role == "AXStaticText" {
+                // SwiftUI는 텍스트의 복사 동작을 AXPress 없이 커스텀 액션으로만 노출하고, 이런 텍스트는 행 안에서도 행과 다르게 동작한다.
+                let actions = actionNames(element)
+                clickable =
+                    actions.contains { $0.hasPrefix("Name:") } || (!insideTarget && actions.contains("AXPress"))
             } else if !insideTarget, Self.pressCheckedRoles.contains(role) {
                 if !inWeb {
                     clickable = hasPressAction(element)
@@ -259,11 +264,13 @@ final class AXScanner {
     }
 
     private func hasPressAction(_ element: AXUIElement) -> Bool {
+        actionNames(element).contains("AXPress")
+    }
+
+    private func actionNames(_ element: AXUIElement) -> [String] {
         var names: CFArray?
-        guard AXUIElementCopyActionNames(element, &names) == .success, let actions = names as? [String] else {
-            return false
-        }
-        return actions.contains("AXPress")
+        guard AXUIElementCopyActionNames(element, &names) == .success else { return [] }
+        return names as? [String] ?? []
     }
 
     private func value(_ element: AXUIElement, _ attribute: String) -> AnyObject? {
