@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.2 - 2026-11-27
+
+### Fixed
+
+- Click mode shows labels on clickable web elements in browsers that report no press action on web content, such as Dia. Sidebar menu items built from plain containers were skipped.
+- Click mode shows labels on texts in native apps that expose only custom actions, such as copyable SwiftUI texts.
+
 ## 0.4.1 - 2026-11-24
 
 ### Fixed
