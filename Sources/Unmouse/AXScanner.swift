@@ -41,6 +41,8 @@ final class AXScanner {
     private let deadline: Date
     private var visited = 0
     private var targets: [Target] = []
+    private var webArea: AXUIElement?
+    private var webReportsPress: Bool?
 
     init(mode: Mode = .click, timeout: TimeInterval = 1.5) {
         self.mode = mode
@@ -202,6 +204,8 @@ final class AXScanner {
             return
         }
 
+        if role == "AXWebArea" { webArea = element }
+
         var clickable = false
         var wrapperIndex: Int?
         if !visible.isNull, enabled {
@@ -219,7 +223,8 @@ final class AXScanner {
                     clickable = hasPressAction(element)
                 } else if role != "AXStaticText" {
                     // WebKit은 클릭 가능한 요소 안의 텍스트에도 AXPress를 보고해서 텍스트는 검사하지 않는다.
-                    clickable = isWebClickable(element, classes: values[7] as? [String] ?? [], frame: full)
+                    clickable = isWebClickable(
+                        element, role: role, classes: values[7] as? [String] ?? [], frame: full, children: children)
                     if clickable { wrapperIndex = targets.count }
                 }
             }
@@ -242,11 +247,43 @@ final class AXScanner {
         if let wrapperIndex, targets.count > wrapperIndex + 1 { targets.remove(at: wrapperIndex) }
     }
 
-    private func isWebClickable(_ element: AXUIElement, classes: [String], frame: CGRect) -> Bool {
+    private func isWebClickable(
+        _ element: AXUIElement, role: String, classes: [String], frame: CGRect, children: [AXUIElement]
+    ) -> Bool {
         if !Self.clickableClasses.isDisjoint(with: classes) { return true }
         // 스크롤 컨테이너처럼 내용을 감싸는 큰 요소도 AXPress를 보고한다.
         guard frame.width < 200 || frame.height < 200 else { return false }
-        return hasPressAction(element)
+        if hasPressAction(element) { return true }
+        // Dia는 웹 요소의 AXPress를 보고하지 않아서 텍스트나 이미지를 직접 담은 작은 그룹을 대상으로 본다.
+        // 본문 문단까지 잡히지 않게 크기를 메뉴 항목 정도로 제한한다.
+        guard role == "AXGroup", frame.width < 300, frame.height < 60, !webSupportsPress() else { return false }
+        return children.contains {
+            let role = string($0, "AXRole")
+            return role == "AXStaticText" || role == "AXImage"
+        }
+    }
+
+    private func webSupportsPress() -> Bool {
+        if let webReportsPress { return webReportsPress }
+        var queue = webArea.map { [$0] } ?? []
+        var index = 0
+        var probed = 0
+        var supported = false
+        // 비활성 버튼은 AXPress가 없을 수 있어서 링크와 버튼을 몇 개 확인한다.
+        while index < queue.count, index < 300, probed < 5, !supported {
+            let candidate = queue[index]
+            index += 1
+            let role = string(candidate, "AXRole")
+            if role == "AXLink" || role == "AXButton" {
+                probed += 1
+                supported = hasPressAction(candidate)
+            } else {
+                queue.append(contentsOf: elements(candidate, "AXChildren"))
+            }
+        }
+        let result = supported || probed == 0
+        webReportsPress = result
+        return result
     }
 
     // 내용이 다 보이는 텍스트 입력란은 스크롤할 것이 없어서 대상에서 뺀다. 메신저의 한두 줄짜리 입력란이 여기에 해당한다.
