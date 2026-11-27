@@ -44,7 +44,9 @@ final class Controller {
 
     func installTap() -> Bool {
         guard tap == nil else { return true }
-        let types: [CGEventType] = [.keyDown, .keyUp, .leftMouseDown, .rightMouseDown, .otherMouseDown, .scrollWheel]
+        let types: [CGEventType] = [
+            .keyDown, .keyUp, .leftMouseDown, .rightMouseDown, .otherMouseDown, .scrollWheel, .mouseMoved,
+        ]
         let mask = types.reduce(CGEventMask(0)) { $0 | (1 << CGEventMask($1.rawValue)) }
         let callback: CGEventTapCallBack = { _, type, event, refcon in
             guard let refcon else { return Unmanaged.passUnretained(event) }
@@ -98,6 +100,11 @@ final class Controller {
             let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
             heldScroll.removeValue(forKey: keyCode)
             return swallowedKeys.remove(keyCode) != nil
+        case .mouseMoved:
+            if state != .idle, event.getIntegerValueField(.eventSourceUserData) != Self.syntheticMarker {
+                CursorHider.show()
+            }
+            return false
         default:
             if event.getIntegerValueField(.eventSourceUserData) == Self.syntheticMarker { return false }
             if state == .scrolling, type == .scrollWheel { return false }
@@ -282,6 +289,7 @@ final class Controller {
 
     private func present(_ targets: [Target], missionControl: Bool) {
         inMissionControl = missionControl
+        CursorHider.hide()
         if purpose == .scroll {
             beginScrolling(targets)
             return
@@ -309,6 +317,7 @@ final class Controller {
         guard let screen = focused ?? screens.first(where: { $0.contains(cursor) }) ?? screens.first else { return }
         gridScreen = screen
         gridPath = []
+        CursorHider.hide()
         showGrid()
     }
 
@@ -398,9 +407,10 @@ final class Controller {
         if moveCursor {
             CGWarpMouseCursorPosition(target.point)
             CGAssociateMouseAndMouseCursorPosition(1)
-            CGEvent(
-                mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: target.point, mouseButton: .left)?
-                .post(tap: .cghidEventTap)
+            let moved = CGEvent(
+                mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: target.point, mouseButton: .left)
+            moved?.setIntegerValueField(.eventSourceUserData, value: Self.syntheticMarker)
+            moved?.post(tap: .cghidEventTap)
         }
 
         var numbers: [LabelItem] = []
@@ -453,6 +463,7 @@ final class Controller {
         scrollTimer?.invalidate()
         scrollTimer = nil
         overlay.hide()
+        CursorHider.show()
     }
 }
 
